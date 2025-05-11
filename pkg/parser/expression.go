@@ -112,7 +112,7 @@ func parseTokens(lexer *Lexer, minBP float32) (*Expression, error) {
 	if lhsToken.IsAtom() {
 		value, err := strconv.ParseFloat(lhsToken.Literal, 64)
 		if err != nil {
-			return nil, fmt.Errorf("failed to parse number: %s", err)
+			return nil, fmt.Errorf("failed to parse number: %w", err)
 		}
 		lhs = newAtomicExpression(value)
 	} else if lhsToken.IsOperator() {
@@ -120,7 +120,7 @@ func parseTokens(lexer *Lexer, minBP float32) (*Expression, error) {
 			var err error
 			lhs, err = parseTokens(lexer, 0.0)
 			if err != nil {
-				return nil, fmt.Errorf("failed to parse expression: %s", err)
+				return nil, fmt.Errorf("failed to parse expression: %w", err)
 			}
 			if lexer.Next().Type != TokenRightParen {
 				return nil, fmt.Errorf("missing right parenthesis")
@@ -145,7 +145,7 @@ func parseTokens(lexer *Lexer, minBP float32) (*Expression, error) {
 		lexer.Next() // consume the operator token
 		rhs, err := parseTokens(lexer, rBP)
 		if err != nil {
-			return nil, fmt.Errorf("failed to parse right-hand side: %s", err)
+			return nil, fmt.Errorf("failed to parse right-hand side: %w", err)
 		}
 		lhs = newOperationExpression(op.Type, lhs, rhs)
 	}

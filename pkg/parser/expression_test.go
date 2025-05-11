@@ -13,111 +13,109 @@ func TestNewExpressionFromLexer(t *testing.T) {
 		name    string
 		input   string
 		want    string
-		wantErr bool
+		wantErr error
 	}{
 		{
 			name:    "empty input",
 			input:   "",
 			want:    "",
-			wantErr: false,
+			wantErr: nil,
 		},
 		{
 			name:    "single number",
 			input:   "42",
 			want:    "42",
-			wantErr: false,
+			wantErr: nil,
 		},
 		{
 			name:    "simple addition",
 			input:   "1 + 2",
 			want:    "(+ 1 2)",
-			wantErr: false,
+			wantErr: nil,
 		},
 		{
 			name:    "simple subtraction",
 			input:   "3 - 4",
 			want:    "(- 3 4)",
-			wantErr: false,
+			wantErr: nil,
 		},
 		{
 			name:    "precedence",
 			input:   "1 + 2 * 3",
 			want:    "(+ 1 (* 2 3))",
-			wantErr: false,
+			wantErr: nil,
 		},
 		{
 			name:    "parentheses",
 			input:   "(1 + 2) * 3",
 			want:    "(* (+ 1 2) 3)",
-			wantErr: false,
+			wantErr: nil,
 		},
 		{
 			name:    "nested operations",
 			input:   "4 * (5 + 6) - 7 / 8",
 			want:    "(- (* 4 (+ 5 6)) (/ 7 8))",
-			wantErr: false,
+			wantErr: nil,
 		},
 		{
 			name:    "missing parentheses",
 			input:   "(1 + 2",
 			want:    "",
-			wantErr: true,
+			wantErr: parser.ErrMissingRightParenthesis,
 		},
 		{
 			name:    "negative number",
 			input:   "-5",
 			want:    "-5",
-			wantErr: false,
+			wantErr: nil,
 		},
 		{
 			name:    "negative operation",
 			input:   "-5 + 3",
 			want:    "(+ -5 3)",
-			wantErr: false,
+			wantErr: nil,
 		},
 		{
 			name:    "negative numbers with operators",
 			input:   "-1 + -2 * -3",
 			want:    "(+ -1 (* -2 -3))",
-			wantErr: false,
+			wantErr: nil,
 		},
 		{
 			name:    "negative operation with parentheses",
 			input:   "(-5 + 3) * 2",
 			want:    "(* (+ -5 3) 2)",
-			wantErr: false,
+			wantErr: nil,
 		},
 		{
 			name:    "negative leading decimal",
 			input:   "-.5",
 			want:    "-0.5",
-			wantErr: false,
+			wantErr: nil,
 		},
 		{
 			name:    "negative leading decimal with operator",
 			input:   "-.5 + 2",
 			want:    "(+ -0.5 2)",
-			wantErr: false,
+			wantErr: nil,
 		},
 		{
 			name:    "negative leading decimal with operator and parentheses",
 			input:   "-5 * (2 + -.3)",
 			want:    "(* -5 (+ 2 -0.3))",
-			wantErr: false,
+			wantErr: nil,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			lexer, err := parser.NewLexer(tt.input)
 			if err != nil {
-				if !tt.wantErr {
-					t.Fatalf("NewLexer() error = %v, wantErr %v", err, tt.wantErr)
-				}
+				t.Fatalf("NewLexer() error = %v", err)
 				return
 			}
 
 			expr, err := parser.NewExpressionFromLexer(lexer)
-			if (err != nil) != tt.wantErr {
+			if !errors.Is(err, tt.wantErr) {
 				t.Errorf("NewExpressionFromLexer() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
@@ -241,15 +239,13 @@ func TestExpressionEvaluate(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			lexer, err := parser.NewLexer(tt.input)
 			if err != nil {
-				if tt.wantErr != nil {
-					t.Fatalf("NewLexer() error = %v, wantErr %v", err, tt.wantErr)
-				}
+				t.Fatalf("NewLexer() error = %v", err)
 				return
 			}
 
 			expr, err := parser.NewExpressionFromLexer(lexer)
 			if err != nil {
-				t.Fatalf("NewExpressionFromLexer() error = %v, wantErr %v", err, tt.wantErr)
+				t.Fatalf("NewExpressionFromLexer() error = %v", err)
 				return
 			}
 

@@ -82,7 +82,7 @@ func (e *Expression) String() string {
 }
 
 func NewExpressionFromLexer(lexer *Lexer) (*Expression, error) {
-	expr, err := parseTokens(lexer, 0.0)
+	expr, err := parseExpressions(lexer, 0.0)
 	if err != nil {
 		return nil, fmt.Errorf("failed to run NewExpressionFromLexer: %w", err)
 	}
@@ -106,7 +106,7 @@ func newOperationExpression(op TokenType, left, right *Expression) *Expression {
 	}
 }
 
-func parseTokens(lexer *Lexer, minBP float32) (*Expression, error) {
+func parseExpressions(lexer *Lexer, minBP float32) (*Expression, error) {
 	var lhs *Expression
 	lhsToken := lexer.Next()
 	if lhsToken.IsAtom() {
@@ -118,7 +118,7 @@ func parseTokens(lexer *Lexer, minBP float32) (*Expression, error) {
 	} else if lhsToken.IsOperator() {
 		if lhsToken.Type == TokenLeftParen {
 			var err error
-			lhs, err = parseTokens(lexer, 0.0)
+			lhs, err = parseExpressions(lexer, 0.0)
 			if err != nil {
 				return nil, fmt.Errorf("failed to parse expression: %w", err)
 			}
@@ -143,7 +143,7 @@ func parseTokens(lexer *Lexer, minBP float32) (*Expression, error) {
 		}
 
 		lexer.Next() // consume the operator token
-		rhs, err := parseTokens(lexer, rBP)
+		rhs, err := parseExpressions(lexer, rBP)
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse right-hand side: %w", err)
 		}

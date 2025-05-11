@@ -105,6 +105,24 @@ func TestNewExpressionFromLexer(t *testing.T) {
 			want:    "(* -5 (+ 2 -0.3))",
 			wantErr: nil,
 		},
+		{
+			name:    "leading right parentheses",
+			input:   ")",
+			want:    "",
+			wantErr: parser.ErrMissingLeftParenthesis,
+		},
+		{
+			name:    "missing left parentheses #1",
+			input:   "1 + (2 * 3))",
+			want:    "",
+			wantErr: parser.ErrMissingLeftParenthesis,
+		},
+		{
+			name:    "missing left parentheses #2",
+			input:   "(1 * (2 + 3))) - 4",
+			want:    "",
+			wantErr: parser.ErrMissingLeftParenthesis,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -233,6 +251,12 @@ func TestExpressionEvaluate(t *testing.T) {
 			input:   "-5 * (2 + -.3)",
 			want:    -5 * (2 + -0.3),
 			wantErr: nil,
+		},
+		{
+			name:    "parentheses only",
+			input:   "()",
+			want:    0,
+			wantErr: parser.ErrNilExpression,
 		},
 	}
 	for _, tt := range tests {

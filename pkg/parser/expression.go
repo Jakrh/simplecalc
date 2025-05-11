@@ -13,8 +13,10 @@ const (
 )
 
 var (
-	ErrNilExpression  = fmt.Errorf("expression is nil")
-	ErrDivisionByZero = fmt.Errorf("division by zero")
+	ErrNilExpression           = fmt.Errorf("expression is nil")
+	ErrDivisionByZero          = fmt.Errorf("division by zero")
+	ErrMissingLeftParenthesis  = fmt.Errorf("missing left parenthesis")
+	ErrMissingRightParenthesis = fmt.Errorf("missing right parenthesis")
 )
 
 type Expression struct {
@@ -107,50 +109,93 @@ func newOperationExpression(op TokenType, left, right *Expression) *Expression {
 }
 
 func parseExpressions(lexer *Lexer, minBP float32) (*Expression, error) {
-	var lhs *Expression
-	lhsToken := lexer.Next()
-	if lhsToken.IsAtom() {
-		value, err := strconv.ParseFloat(lhsToken.Literal, 64)
-		if err != nil {
-			return nil, fmt.Errorf("failed to parse number: %w", err)
-		}
-		lhs = newAtomicExpression(value)
-	} else if lhsToken.IsOperator() {
-		if lhsToken.Type == TokenLeftParen {
-			var err error
-			lhs, err = parseExpressions(lexer, 0.0)
+	// parenBalance is used to track the balance of parentheses.
+	// Increment it when we encounter a left parenthesis
+	// and decrement it when we encounter a right parenthesis.
+	// If it goes below zero, we have some unmatched right parentheses.
+	parenBalance := 0
+
+	var parse func(*Lexer, float32) (*Expression, error)
+	parse = func(lexer *Lexer, minBP float32) (*Expression, error) {
+		var lhs *Expression
+		lhsToken := lexer.Next()
+		if lhsToken.IsAtom() {
+			value, err := strconv.ParseFloat(lhsToken.Literal, 64)
 			if err != nil {
-				return nil, fmt.Errorf("failed to parse expression: %w", err)
+				return nil, fmt.Errorf("failed to parse an atom: %w", err)
 			}
-			if lexer.Next().Type != TokenRightParen {
-				return nil, fmt.Errorf("missing right parenthesis")
+			lhs = newAtomicExpression(value)
+		} else if lhsToken.IsOperator() {
+			// Handle parentheses and EOF tokens
+			if lhsToken.IsLeftParen() {
+				// If we encounter a left parenthesis, we need to parse
+				// the inside expression recursively as left-hand side
+				// and check for the right parenthesis.
+				parenBalance++
+				var err error
+				lhs, err = parse(lexer, 0.0)
+				if err != nil {
+					return nil, fmt.Errorf("failed to parse expression: %w", err)
+				}
+				if lexer.Next().IsRightParen() {
+					parenBalance--
+				} else if parenBalance > 0 {
+					// Return an error if we don't find a matching right parenthesis
+					return nil, ErrMissingRightParenthesis
+				}
+			} else if lhsToken.IsRightParen() {
+				parenBalance--
 			}
+		} else if lhsToken.IsEOF() {
+			return nil, nil
+		} else {
+			return nil, fmt.Errorf("unexpected token: %s", lhsToken.Literal)
 		}
-	} else if lhsToken.IsEOF() {
-		return nil, nil
-	} else {
-		return nil, fmt.Errorf("unexpected token: %s", lhsToken.Literal)
+
+		for {
+			// Handle EOF and right parenthesis tokens
+			op := lexer.Peek()
+			if op.IsEOF() {
+				break
+			} else if op.IsRightParen() {
+				// Return an error if we find a right parenthesis
+				// without a matching left parenthesis
+				if parenBalance == 0 {
+					return nil, ErrMissingLeftParenthesis
+				}
+				break
+			}
+
+			// Stop parsing the right-hand side expression if the left-hand side
+			// binding power of this operator is less than the minimum binding power
+			lBP, rBP := infixBindingPower(op.Type)
+			if lBP < minBP {
+				break
+			}
+
+			// Parse the right-hand side
+			lexer.Next() // Consume the operator token
+			rhs, err := parse(lexer, rBP)
+			if err != nil {
+				return nil, fmt.Errorf("failed to parse right-hand side: %w", err)
+			}
+			lhs = newOperationExpression(op.Type, lhs, rhs)
+		}
+
+		return lhs, nil
 	}
 
-	for {
-		op := lexer.Peek()
-		if op.Type == TokenEOF || op.Type == TokenRightParen {
-			break
-		}
-		lBP, rBP := infixBindingPower(op.Type)
-		if lBP < minBP {
-			break
-		}
-
-		lexer.Next() // consume the operator token
-		rhs, err := parseExpressions(lexer, rBP)
-		if err != nil {
-			return nil, fmt.Errorf("failed to parse right-hand side: %w", err)
-		}
-		lhs = newOperationExpression(op.Type, lhs, rhs)
+	expr, err := parse(lexer, minBP)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse expression: %w", err)
 	}
 
-	return lhs, nil
+	// Return an error if we have unmatched right parentheses
+	if parenBalance < 0 {
+		return nil, ErrMissingLeftParenthesis
+	}
+
+	return expr, nil
 }
 
 func infixBindingPower(op TokenType) (float32, float32) {

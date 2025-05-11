@@ -237,6 +237,61 @@ func TestLexer(t *testing.T) {
 			},
 			wantErr: false,
 		},
+		{
+			name:  "leading right parentheses",
+			input: ")",
+			want: []parser.Token{
+				{Type: parser.TokenRightParen, Literal: ")"},
+				{Type: parser.TokenEOF, Literal: ""},
+			},
+			wantErr: false,
+		},
+		{
+			name:  "missing left parentheses",
+			input: "1 + (2 * 3))",
+			want: []parser.Token{
+				{Type: parser.TokenAtom, Literal: "1"},
+				{Type: parser.TokenPlus, Literal: "+"},
+				{Type: parser.TokenLeftParen, Literal: "("},
+				{Type: parser.TokenAtom, Literal: "2"},
+				{Type: parser.TokenMultiply, Literal: "*"},
+				{Type: parser.TokenAtom, Literal: "3"},
+				{Type: parser.TokenRightParen, Literal: ")"},
+				{Type: parser.TokenRightParen, Literal: ")"},
+				{Type: parser.TokenEOF, Literal: ""},
+			},
+			wantErr: false,
+		},
+		{
+			name:  "missing left parentheses with tailing operation",
+			input: "(1 * (2 + 3))) - 4",
+			want: []parser.Token{
+				{Type: parser.TokenLeftParen, Literal: "("},
+				{Type: parser.TokenAtom, Literal: "1"},
+				{Type: parser.TokenMultiply, Literal: "*"},
+				{Type: parser.TokenLeftParen, Literal: "("},
+				{Type: parser.TokenAtom, Literal: "2"},
+				{Type: parser.TokenPlus, Literal: "+"},
+				{Type: parser.TokenAtom, Literal: "3"},
+				{Type: parser.TokenRightParen, Literal: ")"},
+				{Type: parser.TokenRightParen, Literal: ")"},
+				{Type: parser.TokenRightParen, Literal: ")"},
+				{Type: parser.TokenMinus, Literal: "-"},
+				{Type: parser.TokenAtom, Literal: "4"},
+				{Type: parser.TokenEOF, Literal: ""},
+			},
+			wantErr: false,
+		},
+		{
+			name:  "parentheses only",
+			input: "()",
+			want: []parser.Token{
+				{Type: parser.TokenLeftParen, Literal: "("},
+				{Type: parser.TokenRightParen, Literal: ")"},
+				{Type: parser.TokenEOF, Literal: ""},
+			},
+			wantErr: false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

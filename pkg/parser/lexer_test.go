@@ -202,6 +202,41 @@ func TestLexer(t *testing.T) {
 			},
 			wantErr: false,
 		},
+		{
+			name:  "negative leading decimal",
+			input: "-.5",
+			want: []parser.Token{
+				{Type: parser.TokenAtom, Literal: "-.5"},
+				{Type: parser.TokenEOF, Literal: ""},
+			},
+			wantErr: false,
+		},
+		{
+			name:  "negative leading decimal with operator",
+			input: "-.5 + 2",
+			want: []parser.Token{
+				{Type: parser.TokenAtom, Literal: "-.5"},
+				{Type: parser.TokenPlus, Literal: "+"},
+				{Type: parser.TokenAtom, Literal: "2"},
+				{Type: parser.TokenEOF, Literal: ""},
+			},
+			wantErr: false,
+		},
+		{
+			name:  "negative leading decimal with operator and parentheses",
+			input: "-5 * (2 + -.3)",
+			want: []parser.Token{
+				{Type: parser.TokenAtom, Literal: "-5"},
+				{Type: parser.TokenMultiply, Literal: "*"},
+				{Type: parser.TokenLeftParen, Literal: "("},
+				{Type: parser.TokenAtom, Literal: "2"},
+				{Type: parser.TokenPlus, Literal: "+"},
+				{Type: parser.TokenAtom, Literal: "-.3"},
+				{Type: parser.TokenRightParen, Literal: ")"},
+				{Type: parser.TokenEOF, Literal: ""},
+			},
+			wantErr: false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

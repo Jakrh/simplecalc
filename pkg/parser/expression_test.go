@@ -87,6 +87,24 @@ func TestNewExpressionFromLexer(t *testing.T) {
 			want:    "(* (+ -5 3) 2)",
 			wantErr: false,
 		},
+		{
+			name:    "negative leading decimal",
+			input:   "-.5",
+			want:    "-0.5",
+			wantErr: false,
+		},
+		{
+			name:    "negative leading decimal with operator",
+			input:   "-.5 + 2",
+			want:    "(+ -0.5 2)",
+			wantErr: false,
+		},
+		{
+			name:    "negative leading decimal with operator and parentheses",
+			input:   "-5 * (2 + -.3)",
+			want:    "(* -5 (+ 2 -0.3))",
+			wantErr: false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -198,6 +216,24 @@ func TestExpressionEvaluate(t *testing.T) {
 			name:    "negative operation with parentheses",
 			input:   "(-5 + 3) * 2",
 			want:    (-5 + 3) * 2,
+			wantErr: nil,
+		},
+		{
+			name:    "negative leading decimal",
+			input:   "-.5",
+			want:    -0.5,
+			wantErr: nil,
+		},
+		{
+			name:    "negative leading decimal with operator",
+			input:   "-.5 + 2",
+			want:    -0.5 + 2,
+			wantErr: nil,
+		},
+		{
+			name:    "negative leading decimal with operator and parentheses",
+			input:   "-5 * (2 + -.3)",
+			want:    -5 * (2 + -0.3),
 			wantErr: nil,
 		},
 	}

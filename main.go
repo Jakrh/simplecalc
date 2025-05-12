@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strconv"
 	"strings"
 
 	"simplecalc/pkg/parser"
@@ -12,7 +13,9 @@ import (
 
 func printRusults(results []float64) {
 	for _, result := range results {
-		fmt.Printf("%g\r\n", result)
+		// Minimize digits and no scientific notation
+		// if number is greater than 1e6-1 or less than -1e6+1
+		fmt.Printf("%s\r\n", strconv.FormatFloat(result, 'f', -1, 64))
 	}
 }
 

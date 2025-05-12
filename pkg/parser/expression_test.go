@@ -159,9 +159,9 @@ func TestExpressionEvaluate(t *testing.T) {
 	tests := []struct {
 		name      string
 		input     string
-		variables map[string]float64
 		want      float64
 		wantErr   error
+		variables map[string]float64
 	}{
 		{
 			name:    "empty input",
@@ -268,9 +268,9 @@ func TestExpressionEvaluate(t *testing.T) {
 		{
 			name:      "simple variable operation",
 			input:     "xx / yy",
-			variables: map[string]float64{"xx": 10, "yy": 2},
 			want:      5,
 			wantErr:   nil,
+			variables: map[string]float64{"xx": 10, "yy": 2},
 		},
 	}
 	for _, tt := range tests {

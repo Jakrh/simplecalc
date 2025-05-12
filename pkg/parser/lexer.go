@@ -56,8 +56,10 @@ func (l *Lexer) parseTokens(input string) error {
 			// And must be
 			// Check the current char is either the start of the input
 			// or the previous token is a left parenthesis or an arithmetic operator
+			// or an assignment operator
 			(l.cursor == 0 || l.tokens[len(l.tokens)-1].IsOPLeftParen() ||
-				l.tokens[len(l.tokens)-1].IsArithmeticOperator()) {
+				l.tokens[len(l.tokens)-1].IsArithmeticOperator() ||
+				l.tokens[len(l.tokens)-1].IsOPAssign()) {
 
 			return true
 		}

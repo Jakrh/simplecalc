@@ -124,6 +124,10 @@ func (t Token) IsOPRightParen() bool {
 	return t.typ == TokenRightParen
 }
 
+func (t Token) IsOPAssign() bool {
+	return t.typ == TokenAssign
+}
+
 func (t Token) IsEOF() bool {
 	return t.typ == TokenEOF
 }

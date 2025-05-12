@@ -303,6 +303,17 @@ func TestLexer(t *testing.T) {
 			},
 			wantErr: false,
 		},
+		{
+			name:  "variable assignment with a negative number",
+			input: "x = -5",
+			want: []parser.Token{
+				parser.NewAtomVarToken("x"),
+				parser.NewOPToken(parser.TokenAssign, "="),
+				parser.NewAtomNumToken("-5"),
+				parser.NewEOFToken(),
+			},
+			wantErr: false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

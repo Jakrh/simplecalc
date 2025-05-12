@@ -10,6 +10,12 @@ import (
 	"simplecalc/pkg/terminal"
 )
 
+func printRusults(results []float64) {
+	for _, result := range results {
+		fmt.Printf("%g\r\n", result)
+	}
+}
+
 func help() {
 	msg := `Simple Calculator
 Commands:
@@ -45,7 +51,8 @@ func main() {
 	}
 	defer t.Restore()
 
-	variables := make(map[string]float64)
+	p := parser.NewParser()
+
 	fmt.Printf("Enter an expression (or 'exit' to quit):\r\n")
 	for {
 		input, err := t.ReadLine()
@@ -76,49 +83,16 @@ func main() {
 			continue
 		}
 
-		// Support for multi-line input separated by semicolons
-		lines := strings.SplitSeq(input, ";")
-		for line := range lines {
-			if strings.TrimSpace(line) == "" {
+		// Single input may has multiple expressions separated by semicolons
+		results, err := p.Parse(input)
+		if err != nil {
+			if err == parser.ErrNilExpression {
 				continue
 			}
-
-			lexer, err := parser.NewLexer(line)
-			if err != nil {
-				fmt.Fprintf(os.Stderr, "error creating lexer: %v\r\n", err)
-				continue
-			}
-
-			expr, err := parser.NewExpressionFromLexer(lexer)
-			if err != nil {
-				fmt.Fprintf(os.Stderr, "error creating expression: %v\r\n", err)
-				continue
-			}
-
-			// Handle variable assignment
-			if expr.IsOPAssignment() {
-				varName, rhs := expr.GetAssignment()
-				if varName != "" && rhs != nil {
-					val, err := rhs.Evaluate(variables)
-					if err != nil {
-						fmt.Fprintf(os.Stderr, "error evaluating assignment: %v\r\n", err)
-						continue
-					}
-
-					variables[varName] = val
-					continue
-				}
-			}
-
-			result, err := expr.Evaluate(variables)
-			if err != nil {
-				if err == parser.ErrNilExpression {
-					continue
-				}
-				fmt.Fprintf(os.Stderr, "error evaluating expression: %v\r\n", err)
-				continue
-			}
-			fmt.Printf("%g\r\n", result)
+			fmt.Fprintf(os.Stderr, "error from parser: %v\r\n", err)
+			continue
 		}
+
+		printRusults(results)
 	}
 }

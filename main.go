@@ -20,12 +20,15 @@ Commands:
   - <expression>: Evaluate the expression
   - <var> = <expression>: Assign the expression to the variable
   - <var>: Show the value of the variable
+  - <expression1>; <expression2>; ...: Evaluate multiple expressions
+  - <var1> = <expression1>; <var2> = <expression2>; ...: Assign multiple variables
 Examples:
   >>> 2 + 6
   >>> x = 7 + 8
   >>> y = x * 2
   >>> z = x / (2.5 * (-6 + y))
   >>> z
+  >>> a = 2; b = -17; c = b / (a + -12); c
 `
 
 	// Add CRLF to each line
@@ -73,41 +76,49 @@ func main() {
 			continue
 		}
 
-		lexer, err := parser.NewLexer(input)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "error creating lexer: %v\r\n", err)
-			continue
-		}
+		// Support for multi-line input separated by semicolons
+		lines := strings.SplitSeq(input, ";")
+		for line := range lines {
+			if strings.TrimSpace(line) == "" {
+				continue
+			}
 
-		expr, err := parser.NewExpressionFromLexer(lexer)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "error creating expression: %v\r\n", err)
-			continue
-		}
+			lexer, err := parser.NewLexer(line)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "error creating lexer: %v\r\n", err)
+				continue
+			}
 
-		// Handle variable assignment
-		if expr.IsOPAssignment() {
-			varName, rhs := expr.GetAssignment()
-			if varName != "" && rhs != nil {
-				val, err := rhs.Evaluate(variables)
-				if err != nil {
-					fmt.Fprintf(os.Stderr, "error evaluating assignment: %v\r\n", err)
+			expr, err := parser.NewExpressionFromLexer(lexer)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "error creating expression: %v\r\n", err)
+				continue
+			}
+
+			// Handle variable assignment
+			if expr.IsOPAssignment() {
+				varName, rhs := expr.GetAssignment()
+				if varName != "" && rhs != nil {
+					val, err := rhs.Evaluate(variables)
+					if err != nil {
+						fmt.Fprintf(os.Stderr, "error evaluating assignment: %v\r\n", err)
+						continue
+					}
+
+					variables[varName] = val
 					continue
 				}
+			}
 
-				variables[varName] = val
+			result, err := expr.Evaluate(variables)
+			if err != nil {
+				if err == parser.ErrNilExpression {
+					continue
+				}
+				fmt.Fprintf(os.Stderr, "error evaluating expression: %v\r\n", err)
 				continue
 			}
+			fmt.Printf("%g\r\n", result)
 		}
-
-		result, err := expr.Evaluate(variables)
-		if err != nil {
-			if err == parser.ErrNilExpression {
-				continue
-			}
-			fmt.Fprintf(os.Stderr, "error evaluating expression: %v\r\n", err)
-			continue
-		}
-		fmt.Printf("%g\r\n", result)
 	}
 }

@@ -324,6 +324,46 @@ func TestExpressionEvaluate(t *testing.T) {
 			wantErr:   nil,
 			variables: map[string]float64{"x": 7, "y": 12},
 		},
+		{
+			// 1<<53 is 9007199254740992
+			name:    "too large number",
+			input:   "9007199254740992",
+			want:    0,
+			wantErr: parser.ErrNumOutOfRange,
+		},
+		{
+			// -1<<53 is -9007199254740992
+			name:    "too small number",
+			input:   "-9007199254740992",
+			want:    0,
+			wantErr: parser.ErrNumOutOfRange,
+		},
+		{
+			name:    "too large number from operation",
+			input:   "9007199254740991 + 1",
+			want:    0,
+			wantErr: parser.ErrNumOutOfRange,
+		},
+		{
+			name:    "too small number from operation",
+			input:   "-9007199254740991 - 1",
+			want:    0,
+			wantErr: parser.ErrNumOutOfRange,
+		},
+		{
+			name:      "too large number from variable",
+			input:     "x",
+			want:      0,
+			wantErr:   parser.ErrNumOutOfRange,
+			variables: map[string]float64{"x": 9007199254740992},
+		},
+		{
+			name:      "too large number from variable with operation",
+			input:     "x + 1",
+			want:      0,
+			wantErr:   parser.ErrNumOutOfRange,
+			variables: map[string]float64{"x": 9007199254740991},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

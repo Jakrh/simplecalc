@@ -17,6 +17,7 @@ var (
 	ErrDivisionByZero          = fmt.Errorf("division by zero")
 	ErrMissingLeftParenthesis  = fmt.Errorf("missing left parenthesis")
 	ErrMissingRightParenthesis = fmt.Errorf("missing right parenthesis")
+	ErrNumOutOfRange           = fmt.Errorf("number is too large/small that lost percision in float64")
 )
 
 type Expression struct {
@@ -33,6 +34,20 @@ func (e *Expression) GetType() ExprType {
 }
 
 func (e *Expression) Evaluate(variables map[string]float64) (float64, error) {
+	value, err := e.evaluate(variables)
+	if err != nil {
+		return 0, err
+	}
+
+	// Check if the value is too large/small
+	if e.isNumOutOfRange(value) {
+		return 0, ErrNumOutOfRange
+	}
+
+	return value, nil
+}
+
+func (e *Expression) evaluate(variables map[string]float64) (float64, error) {
 	if e == nil {
 		return 0, ErrNilExpression
 	}
@@ -197,6 +212,15 @@ func (e *Expression) GetAssignment() (string, *Expression) {
 	}
 
 	return "", nil
+}
+
+func (e *Expression) isNumOutOfRange(value float64) bool {
+	const effectiveBoundary = float64(1 << 53)
+	if value <= -effectiveBoundary || value >= effectiveBoundary {
+		return true
+	}
+
+	return false
 }
 
 func parseExpressions(lexer *Lexer, minBP float32) (*Expression, error) {

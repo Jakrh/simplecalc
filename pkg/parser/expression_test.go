@@ -123,6 +123,12 @@ func TestNewExpressionFromLexer(t *testing.T) {
 			want:    "",
 			wantErr: parser.ErrMissingLeftParenthesis,
 		},
+		{
+			name:    "multiple letters variable assignment",
+			input:   "var1 = 5",
+			want:    "(= var1 5)",
+			wantErr: nil,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -151,10 +157,11 @@ func TestNewExpressionFromLexer(t *testing.T) {
 
 func TestExpressionEvaluate(t *testing.T) {
 	tests := []struct {
-		name    string
-		input   string
-		want    float64
-		wantErr error
+		name      string
+		input     string
+		variables map[string]float64
+		want      float64
+		wantErr   error
 	}{
 		{
 			name:    "empty input",
@@ -258,6 +265,13 @@ func TestExpressionEvaluate(t *testing.T) {
 			want:    0,
 			wantErr: parser.ErrNilExpression,
 		},
+		{
+			name:      "simple variable operation",
+			input:     "xx / yy",
+			variables: map[string]float64{"xx": 10, "yy": 2},
+			want:      5,
+			wantErr:   nil,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -273,7 +287,10 @@ func TestExpressionEvaluate(t *testing.T) {
 				return
 			}
 
-			got, err := expr.Evaluate()
+			if tt.variables == nil {
+				tt.variables = make(map[string]float64)
+			}
+			got, err := expr.Evaluate(tt.variables)
 			if !errors.Is(err, tt.wantErr) {
 				t.Fatalf("Evaluate() error = %v, wantErr %v", err, tt.wantErr)
 			}

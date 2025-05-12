@@ -63,8 +63,18 @@ var (
 )
 
 type Token struct {
-	typ     TokenType
-	literal string
+	typ        TokenType
+	literal    string
+	isVariable bool
+}
+
+// NewAtomVarToken creates a new variable atom token.
+func NewAtomVarToken(literal string) Token {
+	return Token{
+		typ:        TokenAtom,
+		literal:    literal,
+		isVariable: true,
+	}
 }
 
 // NewAtomNumToken creates a new number atom token.
@@ -98,6 +108,10 @@ func (t Token) IsOperator() bool {
 	return operators[t.typ]
 }
 
+func (t Token) IsAtomVariable() bool {
+	return t.isVariable
+}
+
 func (t Token) IsArithmeticOperator() bool {
 	return arithmeticOperators[t.typ]
 }
@@ -114,8 +128,22 @@ func (t Token) IsEOF() bool {
 	return t.typ == TokenEOF
 }
 
+// GetVarName returns the variable name of the token
+func (t Token) GetVarName() string {
+	if !t.isVariable {
+		return ""
+	}
+
+	if t.literal == "" {
+		// Must be a bug from the lexer, don't recover it
+		panic("variable name is empty")
+	}
+
+	return t.literal
+}
+
 func (t Token) GetValue() float64 {
-	if t.typ != TokenAtom {
+	if t.typ != TokenAtom || t.isVariable {
 		return 0
 	}
 

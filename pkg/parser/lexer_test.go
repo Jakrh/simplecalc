@@ -292,6 +292,17 @@ func TestLexer(t *testing.T) {
 			},
 			wantErr: false,
 		},
+		{
+			name:  "multiple letters variable assignment",
+			input: "var1 = 5",
+			want: []parser.Token{
+				parser.NewAtomVarToken("var1"),
+				parser.NewOPToken(parser.TokenAssign, "="),
+				parser.NewAtomNumToken("5"),
+				parser.NewEOFToken(),
+			},
+			wantErr: false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

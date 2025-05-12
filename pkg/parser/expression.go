@@ -20,24 +20,34 @@ var (
 )
 
 type Expression struct {
-	typ   ExprType
-	value float64
-	op    TokenType
-	left  *Expression
-	right *Expression
+	typ          ExprType
+	value        float64
+	variableName string
+	op           TokenType
+	left         *Expression
+	right        *Expression
 }
 
 func (e *Expression) GetType() ExprType {
 	return e.typ
 }
 
-func (e *Expression) Evaluate() (float64, error) {
+func (e *Expression) Evaluate(variables map[string]float64) (float64, error) {
 	if e == nil {
 		return 0, ErrNilExpression
 	}
 
 	// If the expression is atomic, get value
+	// from the value field or from the variables map
 	if e.IsAtom() {
+		if e.IsAtomVarName() {
+			varName := e.GetVarName()
+			if val, ok := variables[varName]; ok {
+				return val, nil
+			}
+			return 0, fmt.Errorf("undefined variable '%s'", varName)
+		}
+
 		return e.value, nil
 	}
 
@@ -45,18 +55,20 @@ func (e *Expression) Evaluate() (float64, error) {
 	var leftValue, rightValue float64
 	var err error
 	if e.left != nil {
-		leftValue, err = e.left.Evaluate()
+		leftValue, err = e.left.Evaluate(variables)
 		if err != nil {
 			return 0, fmt.Errorf("failed to evaluate left expression: %w", err)
 		}
 	}
 	if e.right != nil {
-		rightValue, err = e.right.Evaluate()
+		rightValue, err = e.right.Evaluate(variables)
 		if err != nil {
 			return 0, fmt.Errorf("failed to evaluate right expression: %w", err)
 		}
 	}
 	switch e.op {
+	case TokenAssign:
+		return 0, nil
 	case TokenPlus:
 		return leftValue + rightValue, nil
 	case TokenMinus:
@@ -79,7 +91,11 @@ func (e *Expression) String() string {
 	}
 
 	if e.IsAtom() {
-		return strconv.FormatFloat(e.value, 'f', -1, 64)
+		if e.IsAtomVarName() {
+			return e.GetVarName()
+		} else {
+			return strconv.FormatFloat(e.value, 'f', -1, 64)
+		}
 	} else {
 		return fmt.Sprintf("(%s %s %s)", e.op, e.left, e.right)
 	}
@@ -92,6 +108,13 @@ func NewExpressionFromLexer(lexer *Lexer) (*Expression, error) {
 	}
 
 	return expr, nil
+}
+
+func newAtomicVarExpression(literal string) *Expression {
+	return &Expression{
+		typ:          ExprTypeAtomic,
+		variableName: literal,
+	}
 }
 
 func newAtomicNumExpression(value float64) *Expression {
@@ -118,8 +141,50 @@ func (e *Expression) IsOperation() bool {
 	return e != nil && e.typ == ExprTypeOperation
 }
 
+// IsAtomVarName checks if the expression is an atom variable name.
+func (e *Expression) IsAtomVarName() bool {
+	return e != nil && e.IsAtom() && e.variableName != ""
+}
+
 func (e *Expression) IsOPAssignment() bool {
 	return e != nil && e.IsOperation() && e.op == TokenAssign
+}
+
+// GetVarName returns the variable name of the expression
+func (e *Expression) GetVarName() string {
+	if e.IsAtomVarName() {
+		return e.variableName
+	}
+
+	return ""
+}
+
+// GetAssignment returns the right-hand side expression
+// of the operation from an assignment expression.
+func (e *Expression) GetAssignment() (string, *Expression) {
+	if e.IsOperation() && e.IsOPAssignment() {
+		if e.left == nil || !e.left.IsAtom() {
+			// Must be a bug, don't recover it
+			panic("left expression is not an atom")
+		}
+
+		varName := e.left.variableName
+		if varName == "" {
+			// Must be a bug from the lexer, don't recover it
+			// This atom may be a number not a variable name
+			panic("variable name is empty")
+		}
+
+		expr := e.right
+		if expr == nil {
+			// Must be a bug, don't recover it
+			panic("right expression is nil")
+		}
+
+		return varName, expr
+	}
+
+	return "", nil
 }
 
 func parseExpressions(lexer *Lexer, minBP float32) (*Expression, error) {
@@ -134,7 +199,15 @@ func parseExpressions(lexer *Lexer, minBP float32) (*Expression, error) {
 		var lhs *Expression
 		lhsToken := lexer.Next()
 		if lhsToken.IsAtom() {
-			lhs = newAtomicNumExpression(lhsToken.GetValue())
+			if lhsToken.IsAtomVariable() {
+				varName := lhsToken.GetVarName()
+				if varName == "" {
+					return nil, fmt.Errorf("variable name is empty")
+				}
+				lhs = newAtomicVarExpression(varName)
+			} else {
+				lhs = newAtomicNumExpression(lhsToken.GetValue())
+			}
 		} else if lhsToken.IsOperator() {
 			// Handle parentheses and EOF tokens
 			if lhsToken.IsOPLeftParen() {

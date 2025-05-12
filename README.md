@@ -20,6 +20,7 @@ Based on Pratt parsing and [jdvillal/parser](https://github.com/jdvillal/parser/
 * `2 * (12.4 / (7 + -2))`
 * `-34 * (2 + -.23)`
 * `4 * (272 + 6) - 324 / 8`
+* `x = 2`, `y = 5.25` and `x * 3 + y`
 
 ---
 

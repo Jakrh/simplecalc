@@ -10,6 +10,7 @@ import (
 )
 
 func main() {
+	variables := make(map[string]float64)
 	reader := bufio.NewReader(os.Stdin)
 
 	fmt.Println("Enter an expression (or 'exit' to quit):")
@@ -38,7 +39,22 @@ func main() {
 			continue
 		}
 
-		result, err := expr.Evaluate()
+		// Handle variable assignment
+		if expr.IsOPAssignment() {
+			varName, rhs := expr.GetAssignment()
+			if varName != "" && rhs != nil {
+				val, err := rhs.Evaluate(variables)
+				if err != nil {
+					fmt.Fprintf(os.Stderr, "error: %v\n", err)
+					continue
+				}
+
+				variables[varName] = val
+				continue
+			}
+		}
+
+		result, err := expr.Evaluate(variables)
 		if err != nil {
 			if err == parser.ErrNilExpression {
 				continue

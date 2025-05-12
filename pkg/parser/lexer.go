@@ -75,6 +75,9 @@ func (l *Lexer) parseTokens(input string) error {
 	for l.cursor < len(input) {
 		char := input[l.cursor]
 		switch char {
+		case '=':
+			l.tokens = append(l.tokens, NewOPToken(TokenAssign, string(char)))
+			l.cursor++
 		case '+':
 			l.tokens = append(l.tokens, NewOPToken(TokenPlus, string(char)))
 			l.cursor++
@@ -116,6 +119,11 @@ func (l *Lexer) parseTokens(input string) error {
 				err := l.readNumber(input)
 				if err != nil {
 					return fmt.Errorf("failed to read number: %w", err)
+				}
+			} else if char == '_' || unicode.IsLetter(rune(char)) {
+				err := l.readVarName(input)
+				if err != nil {
+					return fmt.Errorf("failed to read variable name: %w", err)
 				}
 			} else {
 				return fmt.Errorf("illegal character %s", string(char))
@@ -187,5 +195,34 @@ func (l *Lexer) readNumber(input string) error {
 
 	l.tokens = append(l.tokens, NewAtomNumToken(sb.String()))
 
+	return nil
+}
+
+// readVarName reads a variable name from the input string
+func (l *Lexer) readVarName(input string) error {
+	// Check if the variable name starts with a letter or underscore
+	if l.cursor < len(input) &&
+		(!unicode.IsLetter(rune(input[l.cursor])) && input[l.cursor] != '_') {
+		return fmt.Errorf("invalid variable name: '%c'", input[l.cursor])
+	}
+
+	var sb strings.Builder
+	for l.cursor < len(input) &&
+		(unicode.IsLetter(rune(input[l.cursor])) ||
+			unicode.IsDigit(rune(input[l.cursor])) ||
+			input[l.cursor] == '_') {
+		sb.WriteByte(input[l.cursor])
+		l.cursor++
+	}
+
+	if sb.Len() == 0 {
+		if l.cursor < len(input) {
+			return fmt.Errorf("invalid variable name: %c", input[l.cursor])
+		} else {
+			return fmt.Errorf("invalid variable name at end of input")
+		}
+	}
+
+	l.tokens = append(l.tokens, NewAtomVarToken(sb.String()))
 	return nil
 }

@@ -1,6 +1,6 @@
 # Simple calculator
 
-Parse and calculate numbers from strings like `2 * (12.4 / (7 + -2))`, or multi-line inputs that separated by semicolons like `x = 2; y = 5.25; z = x * (3 + y); z`.
+Parse and calculate numbers from strings like `2 * (12.4 / (7 + -2))`, or multi-line inputs that separated by semicolons like `x = 2; y = 5.25; z = x * (3 + -y); z`.
 
 Based on Pratt parsing and [jdvillal/parser](https://github.com/jdvillal/parser/).
 
@@ -20,7 +20,7 @@ Based on Pratt parsing and [jdvillal/parser](https://github.com/jdvillal/parser/
 * `2 * (12.4 / (7 + -2))`
 * `-34 * (2 + -.23)`
 * `4 * (272 + 6) - 324 / 8`
-* `x = 2; y = 5.25; z = x * (3 + y); z`
+* `x = 2; y = 5.25; z = x * (3 + -y); z`
 
 ---
 

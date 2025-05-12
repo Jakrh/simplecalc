@@ -92,6 +92,17 @@ func (l *Lexer) parseTokens(input string) error {
 				}
 				continue
 			}
+
+			// Check if a variable name with a negative sign
+			if l.cursor < len(input)-1 &&
+				(input[l.cursor+1] == '_' || unicode.IsLetter(rune(input[l.cursor+1]))) {
+				err := l.readVarName(input, true)
+				if err != nil {
+					return fmt.Errorf("failed to read variable name: %w", err)
+				}
+				continue
+			}
+
 			// If not a negative number, treat it as a minus operator
 			l.tokens = append(l.tokens, NewOPToken(TokenMinus, string(char)))
 			l.cursor++
@@ -123,7 +134,7 @@ func (l *Lexer) parseTokens(input string) error {
 					return fmt.Errorf("failed to read number: %w", err)
 				}
 			} else if char == '_' || unicode.IsLetter(rune(char)) {
-				err := l.readVarName(input)
+				err := l.readVarName(input, false)
 				if err != nil {
 					return fmt.Errorf("failed to read variable name: %w", err)
 				}
@@ -201,7 +212,20 @@ func (l *Lexer) readNumber(input string) error {
 }
 
 // readVarName reads a variable name from the input string
-func (l *Lexer) readVarName(input string) error {
+func (l *Lexer) readVarName(input string, negative bool) error {
+	// If the variable is negative, we need to skip the '-' character
+	// This is to handle cases like "-x", "(-x+3)", "-x-1".
+	if negative {
+		if l.cursor >= len(input)-1 {
+			return fmt.Errorf("invalid variable name at end of input")
+		}
+		if input[l.cursor] != '-' {
+			return fmt.Errorf("invalid variable name: '%c'", input[l.cursor])
+		}
+
+		l.cursor++
+	}
+
 	// Check if the variable name starts with a letter or underscore
 	if l.cursor < len(input) &&
 		(!unicode.IsLetter(rune(input[l.cursor])) && input[l.cursor] != '_') {
@@ -209,6 +233,9 @@ func (l *Lexer) readVarName(input string) error {
 	}
 
 	var sb strings.Builder
+	if negative {
+		sb.WriteByte('-')
+	}
 	for l.cursor < len(input) &&
 		(unicode.IsLetter(rune(input[l.cursor])) ||
 			unicode.IsDigit(rune(input[l.cursor])) ||

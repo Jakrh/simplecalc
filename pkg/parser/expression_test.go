@@ -129,6 +129,30 @@ func TestNewExpressionFromLexer(t *testing.T) {
 			want:    "(= var1 5)",
 			wantErr: nil,
 		},
+		{
+			name:    "support negative variable",
+			input:   "-y",
+			want:    "-y",
+			wantErr: nil,
+		},
+		{
+			name:    "support negative variable with parentheses",
+			input:   "(-y)",
+			want:    "-y",
+			wantErr: nil,
+		},
+		{
+			name:    "support negative variable with parentheses and operator",
+			input:   "(-y) + 2",
+			want:    "(+ -y 2)",
+			wantErr: nil,
+		},
+		{
+			name:    "support negative variable assignment",
+			input:   "x = -y + 2",
+			want:    "(= x (+ -y 2))",
+			wantErr: nil,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -271,6 +295,34 @@ func TestExpressionEvaluate(t *testing.T) {
 			want:      5,
 			wantErr:   nil,
 			variables: map[string]float64{"xx": 10, "yy": 2},
+		},
+		{
+			name:      "support negative variable",
+			input:     "-y",
+			want:      -12,
+			wantErr:   nil,
+			variables: map[string]float64{"y": 12},
+		},
+		{
+			name:      "support negative variable with parentheses",
+			input:     "(-y)",
+			want:      -12,
+			wantErr:   nil,
+			variables: map[string]float64{"y": 12},
+		},
+		{
+			name:      "support negative variable with parentheses and operator",
+			input:     "(-y) + 2",
+			want:      -10,
+			wantErr:   nil,
+			variables: map[string]float64{"y": 12},
+		},
+		{
+			name:      "support negative variable assignment",
+			input:     "x = -y + 2",
+			want:      0,
+			wantErr:   nil,
+			variables: map[string]float64{"x": 7, "y": 12},
 		},
 	}
 	for _, tt := range tests {

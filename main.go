@@ -28,7 +28,7 @@ Examples:
   >>> y = x * 2
   >>> z = x / (2.5 * (-6 + y))
   >>> z
-  >>> a = 2; b = -17; c = b / (a + -12); c
+  >>> a = 2; b = -17; c = -b / (a + -12); c
 `
 
 	// Add CRLF to each line

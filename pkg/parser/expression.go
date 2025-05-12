@@ -42,7 +42,19 @@ func (e *Expression) Evaluate(variables map[string]float64) (float64, error) {
 	if e.IsAtom() {
 		if e.IsAtomVarName() {
 			varName := e.GetVarName()
+
+			// Check if the variable name starts with a negative sign
+			negative := false
+			if len(varName) > 0 && varName[0] == '-' {
+				varName = varName[1:] // Remove the negative sign
+				negative = true       // Set the negative flag
+			}
+
 			if val, ok := variables[varName]; ok {
+				if negative {
+					val = -val
+				}
+
 				return val, nil
 			}
 			return 0, fmt.Errorf("undefined variable '%s'", varName)

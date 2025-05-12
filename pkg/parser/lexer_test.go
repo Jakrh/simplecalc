@@ -314,6 +314,52 @@ func TestLexer(t *testing.T) {
 			},
 			wantErr: false,
 		},
+		{
+			name:  "support negative variable",
+			input: "-y",
+			want: []parser.Token{
+				parser.NewAtomVarToken("-y"),
+				parser.NewEOFToken(),
+			},
+			wantErr: false,
+		},
+		{
+			name:  "support negative variable with parentheses",
+			input: "(-y)",
+			want: []parser.Token{
+				parser.NewOPToken(parser.TokenLeftParen, "("),
+				parser.NewAtomVarToken("-y"),
+				parser.NewOPToken(parser.TokenRightParen, ")"),
+				parser.NewEOFToken(),
+			},
+			wantErr: false,
+		},
+		{
+			name:  "support negative variable with parentheses and operator",
+			input: "(-y) + 2",
+			want: []parser.Token{
+				parser.NewOPToken(parser.TokenLeftParen, "("),
+				parser.NewAtomVarToken("-y"),
+				parser.NewOPToken(parser.TokenRightParen, ")"),
+				parser.NewOPToken(parser.TokenPlus, "+"),
+				parser.NewAtomNumToken("2"),
+				parser.NewEOFToken(),
+			},
+			wantErr: false,
+		},
+		{
+			name:  "support negative variable assignment",
+			input: "x = -y + 2",
+			want: []parser.Token{
+				parser.NewAtomVarToken("x"),
+				parser.NewOPToken(parser.TokenAssign, "="),
+				parser.NewAtomVarToken("-y"),
+				parser.NewOPToken(parser.TokenPlus, "+"),
+				parser.NewAtomNumToken("2"),
+				parser.NewEOFToken(),
+			},
+			wantErr: false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

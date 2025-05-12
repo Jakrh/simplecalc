@@ -10,6 +10,7 @@ Based on Pratt parsing and [jdvillal/parser](https://github.com/jdvillal/parser/
 * `-`
 * `*`
 * `/`
+* `**`
 * `(` and `)`
 
 ## Supported expressions like:
@@ -20,7 +21,9 @@ Based on Pratt parsing and [jdvillal/parser](https://github.com/jdvillal/parser/
 * `2 * (12.4 / (7 + -2))`
 * `-34 * (2 + -.23)`
 * `4 * (272 + 6) - 324 / 8`
+* `2 ** 10`
 * `x = 2; y = 5.25; z = x * (3 + -y); z`
+* `x = 1.6; y = .25; -((2.5 * x) ** 6) ** y / .5 ** 3`
 
 ---
 

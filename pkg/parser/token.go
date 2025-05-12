@@ -14,6 +14,7 @@ const (
 	TokenMinus
 	TokenMultiply
 	TokenDivide
+	TokenPower
 	TokenLeftParen
 	TokenRightParen
 	TokenAssign
@@ -33,6 +34,8 @@ func (tt TokenType) String() string {
 		return "*"
 	case TokenDivide:
 		return "/"
+	case TokenPower:
+		return "**"
 	case TokenLeftParen:
 		return "("
 	case TokenRightParen:
@@ -50,6 +53,7 @@ var (
 		TokenMinus:      true,
 		TokenMultiply:   true,
 		TokenDivide:     true,
+		TokenPower:      true,
 		TokenLeftParen:  true,
 		TokenRightParen: true,
 	}
@@ -59,6 +63,7 @@ var (
 		TokenMinus:    true,
 		TokenMultiply: true,
 		TokenDivide:   true,
+		TokenPower:    true,
 	}
 )
 
@@ -194,6 +199,8 @@ func (t Token) GetInfixBindingPower() (float32, float32, error) {
 		return 1.0, 1.1, nil
 	case TokenMultiply, TokenDivide:
 		return 2.0, 2.1, nil
+	case TokenPower:
+		return 4.0, 4.1, nil
 	default:
 		return 0, 0, fmt.Errorf("unknown infix operator: '%s'", t.typ)
 	}

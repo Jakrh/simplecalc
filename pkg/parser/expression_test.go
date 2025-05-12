@@ -165,6 +165,42 @@ func TestNewExpressionFromLexer(t *testing.T) {
 			want:    "(= x (+ (- 0 y) 2))",
 			wantErr: nil,
 		},
+		{
+			name:    "simple power operation",
+			input:   "2 ** 3",
+			want:    "(** 2 3)",
+			wantErr: nil,
+		},
+		{
+			name:    "power operation with parentheses",
+			input:   "(2 + 3) ** 2",
+			want:    "(** (+ 2 3) 2)",
+			wantErr: nil,
+		},
+		{
+			name:    "power operation with negative number",
+			input:   "-2 ** 3",
+			want:    "(- 0 (** 2 3))",
+			wantErr: nil,
+		},
+		{
+			name:    "power operation with decimal number and parentheses",
+			input:   "(2.5 + 3) ** 2",
+			want:    "(** (+ 2.5 3) 2)",
+			wantErr: nil,
+		},
+		{
+			name:    "2 raised to the power of 0.5",
+			input:   "2 ** 0.5",
+			want:    "(** 2 0.5)",
+			wantErr: nil,
+		},
+		{
+			name:    "power operation with decimal number, negative sign and parentheses",
+			input:   "-((2.5 * x) ** 6) ** y / .5 ** 3",
+			want:    "(/ (- 0 (** (** (* 2.5 x) 6) y)) (** 0.5 3))",
+			wantErr: nil,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -388,6 +424,43 @@ func TestExpressionEvaluate(t *testing.T) {
 			want:      0,
 			wantErr:   parser.ErrNumOutOfRange,
 			variables: map[string]float64{"x": 9007199254740991},
+		},
+		{
+			name:    "simple power operation",
+			input:   "2 ** 3",
+			want:    8,
+			wantErr: nil,
+		},
+		{
+			name:    "power operation with parentheses",
+			input:   "(2 + 3) ** 2",
+			want:    25,
+			wantErr: nil,
+		},
+		{
+			name:    "power operation with negative number",
+			input:   "-2 ** 3",
+			want:    -8,
+			wantErr: nil,
+		},
+		{
+			name:    "power operation with decimal number and parentheses",
+			input:   "(2.5 + 3) ** 2",
+			want:    30.25,
+			wantErr: nil,
+		},
+		{
+			name:    "2 raised to the power of 0.5",
+			input:   "2 ** 0.5",
+			want:    1.4142135623730951,
+			wantErr: nil,
+		},
+		{
+			name:      "power operation with decimal number, negative sign and parentheses",
+			input:     "-((2.5 * x) ** 6) ** y / .5 ** 3",
+			want:      -64.0,
+			wantErr:   nil,
+			variables: map[string]float64{"x": 1.6, "y": 0.25},
 		},
 	}
 	for _, tt := range tests {

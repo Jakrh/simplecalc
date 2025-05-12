@@ -2,6 +2,7 @@ package parser
 
 import (
 	"fmt"
+	"math"
 	"strconv"
 )
 
@@ -107,6 +108,8 @@ func (e *Expression) evaluate(variables map[string]float64) (float64, error) {
 			return 0, ErrDivisionByZero
 		}
 		return leftValue / rightValue, nil
+	case TokenPower:
+		return math.Pow(leftValue, rightValue), nil
 	default:
 		return 0, fmt.Errorf("unknown operator: %s", e.op)
 	}

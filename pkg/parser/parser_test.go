@@ -135,6 +135,17 @@ func TestParser_Parse_MultiLine(t *testing.T) {
 			input: "-1.9999999999",
 			want:  []float64{-1.9999999999},
 		},
+		{
+			name:  "2 raised to the power of 0.5 with assignment",
+			input: "x = 2; y = 0.5; z = x ** y; z",
+			want:  []float64{1.4142135623730951},
+		},
+		{
+			name:    "power operation with decimal number, negative sign and parentheses",
+			input:   "x = 1.6; y = .25; -((2.5 * x) ** 6) ** y / .5 ** 3",
+			want:    []float64{-64.0},
+			wantErr: nil,
+		},
 	}
 
 	for _, tt := range tests {

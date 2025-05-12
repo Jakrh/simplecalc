@@ -59,6 +59,13 @@ func (l *Lexer) parseTokens(input string) error {
 			l.tokens = append(l.tokens, NewOPToken(TokenMinus))
 			l.cursor++
 		case '*':
+			// Check for double asterisk (power operator)
+			if l.cursor < len(input)-1 && input[l.cursor+1] == '*' {
+				l.tokens = append(l.tokens, NewOPToken(TokenPower))
+				l.cursor += 2
+				continue
+			}
+			// Treat single asterisk as multiplication operator
 			l.tokens = append(l.tokens, NewOPToken(TokenMultiply))
 			l.cursor++
 		case '/':

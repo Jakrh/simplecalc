@@ -15,7 +15,7 @@ func NewLexer(input string) (*Lexer, error) {
 	if len(input) == 0 {
 		return &Lexer{
 			tokens: []Token{
-				{Type: TokenEOF, Literal: ""},
+				NewEOFToken(),
 			},
 			cursor: 0,
 		}, nil
@@ -56,7 +56,7 @@ func (l *Lexer) parseTokens(input string) error {
 			// And must be
 			// Check the current char is either the start of the input
 			// or the previous token is a left parenthesis or an arithmetic operator
-			(l.cursor == 0 || l.tokens[len(l.tokens)-1].IsLeftParen() ||
+			(l.cursor == 0 || l.tokens[len(l.tokens)-1].IsOPLeftParen() ||
 				l.tokens[len(l.tokens)-1].IsArithmeticOperator()) {
 
 			return true
@@ -76,7 +76,7 @@ func (l *Lexer) parseTokens(input string) error {
 		char := input[l.cursor]
 		switch char {
 		case '+':
-			l.tokens = append(l.tokens, Token{Type: TokenPlus, Literal: string(char)})
+			l.tokens = append(l.tokens, NewOPToken(TokenPlus, string(char)))
 			l.cursor++
 		case '-':
 			// Check if a negative number
@@ -88,19 +88,19 @@ func (l *Lexer) parseTokens(input string) error {
 				continue
 			}
 			// If not a negative number, treat it as a minus operator
-			l.tokens = append(l.tokens, Token{Type: TokenMinus, Literal: string(char)})
+			l.tokens = append(l.tokens, NewOPToken(TokenMinus, string(char)))
 			l.cursor++
 		case '*':
-			l.tokens = append(l.tokens, Token{Type: TokenMultiply, Literal: string(char)})
+			l.tokens = append(l.tokens, NewOPToken(TokenMultiply, string(char)))
 			l.cursor++
 		case '/':
-			l.tokens = append(l.tokens, Token{Type: TokenDivide, Literal: string(char)})
+			l.tokens = append(l.tokens, NewOPToken(TokenDivide, string(char)))
 			l.cursor++
 		case '(':
-			l.tokens = append(l.tokens, Token{Type: TokenLeftParen, Literal: string(char)})
+			l.tokens = append(l.tokens, NewOPToken(TokenLeftParen, string(char)))
 			l.cursor++
 		case ')':
-			l.tokens = append(l.tokens, Token{Type: TokenRightParen, Literal: string(char)})
+			l.tokens = append(l.tokens, NewOPToken(TokenRightParen, string(char)))
 			l.cursor++
 		case '.':
 			if l.cursor < len(input)-1 && unicode.IsDigit(rune(input[l.cursor+1])) {
@@ -123,7 +123,7 @@ func (l *Lexer) parseTokens(input string) error {
 		}
 	}
 
-	l.tokens = append(l.tokens, Token{Type: TokenEOF, Literal: ""})
+	l.tokens = append(l.tokens, NewEOFToken())
 
 	// Reset the cursor
 	// Here we are using l.cursor to track the position in the tokens slice
@@ -136,7 +136,7 @@ func (l *Lexer) parseTokens(input string) error {
 // It returns EOF if there are no more tokens.
 func (l *Lexer) Next() Token {
 	if l.cursor >= len(l.tokens) {
-		return Token{Type: TokenEOF}
+		return NewEOFToken()
 	}
 
 	token := l.tokens[l.cursor]
@@ -147,7 +147,7 @@ func (l *Lexer) Next() Token {
 
 func (l *Lexer) Peek() Token {
 	if l.cursor >= len(l.tokens) {
-		return Token{Type: TokenEOF}
+		return NewEOFToken()
 	}
 
 	return l.tokens[l.cursor]
@@ -185,7 +185,7 @@ func (l *Lexer) readNumber(input string) error {
 		return fmt.Errorf("invalid number: %c", input[l.cursor])
 	}
 
-	l.tokens = append(l.tokens, Token{Type: TokenAtom, Literal: sb.String()})
+	l.tokens = append(l.tokens, NewAtomNumToken(sb.String()))
 
 	return nil
 }

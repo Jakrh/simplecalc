@@ -20,15 +20,15 @@ var (
 )
 
 type Expression struct {
-	Type  ExprType
-	Value float64
-	OP    TokenType
-	Left  *Expression
-	Right *Expression
+	typ   ExprType
+	value float64
+	op    TokenType
+	left  *Expression
+	right *Expression
 }
 
 func (e *Expression) GetType() ExprType {
-	return e.Type
+	return e.typ
 }
 
 func (e *Expression) Evaluate() (float64, error) {
@@ -36,25 +36,27 @@ func (e *Expression) Evaluate() (float64, error) {
 		return 0, ErrNilExpression
 	}
 
-	if e.Type == ExprTypeAtomic {
-		return e.Value, nil
+	// If the expression is atomic, get value
+	if e.IsAtom() {
+		return e.value, nil
 	}
 
+	// If the expression is an operation, evaluate the left and right expressions
 	var leftValue, rightValue float64
 	var err error
-	if e.Left != nil {
-		leftValue, err = e.Left.Evaluate()
+	if e.left != nil {
+		leftValue, err = e.left.Evaluate()
 		if err != nil {
 			return 0, fmt.Errorf("failed to evaluate left expression: %w", err)
 		}
 	}
-	if e.Right != nil {
-		rightValue, err = e.Right.Evaluate()
+	if e.right != nil {
+		rightValue, err = e.right.Evaluate()
 		if err != nil {
 			return 0, fmt.Errorf("failed to evaluate right expression: %w", err)
 		}
 	}
-	switch e.OP {
+	switch e.op {
 	case TokenPlus:
 		return leftValue + rightValue, nil
 	case TokenMinus:
@@ -67,7 +69,7 @@ func (e *Expression) Evaluate() (float64, error) {
 		}
 		return leftValue / rightValue, nil
 	default:
-		return 0, fmt.Errorf("unknown operator: %s", e.OP)
+		return 0, fmt.Errorf("unknown operator: %s", e.op)
 	}
 }
 
@@ -76,10 +78,10 @@ func (e *Expression) String() string {
 		return ""
 	}
 
-	if e.Type == ExprTypeAtomic {
-		return strconv.FormatFloat(e.Value, 'f', -1, 64)
+	if e.IsAtom() {
+		return strconv.FormatFloat(e.value, 'f', -1, 64)
 	} else {
-		return fmt.Sprintf("(%s %s %s)", e.OP, e.Left, e.Right)
+		return fmt.Sprintf("(%s %s %s)", e.op, e.left, e.right)
 	}
 }
 
@@ -92,20 +94,32 @@ func NewExpressionFromLexer(lexer *Lexer) (*Expression, error) {
 	return expr, nil
 }
 
-func newAtomicExpression(value float64) *Expression {
+func newAtomicNumExpression(value float64) *Expression {
 	return &Expression{
-		Type:  ExprTypeAtomic,
-		Value: value,
+		typ:   ExprTypeAtomic,
+		value: value,
 	}
 }
 
 func newOperationExpression(op TokenType, left, right *Expression) *Expression {
 	return &Expression{
-		Type:  ExprTypeOperation,
-		OP:    op,
-		Left:  left,
-		Right: right,
+		typ:   ExprTypeOperation,
+		op:    op,
+		left:  left,
+		right: right,
 	}
+}
+
+func (e *Expression) IsAtom() bool {
+	return e != nil && e.typ == ExprTypeAtomic
+}
+
+func (e *Expression) IsOperation() bool {
+	return e != nil && e.typ == ExprTypeOperation
+}
+
+func (e *Expression) IsOPAssignment() bool {
+	return e != nil && e.IsOperation() && e.op == TokenAssign
 }
 
 func parseExpressions(lexer *Lexer, minBP float32) (*Expression, error) {
@@ -120,14 +134,10 @@ func parseExpressions(lexer *Lexer, minBP float32) (*Expression, error) {
 		var lhs *Expression
 		lhsToken := lexer.Next()
 		if lhsToken.IsAtom() {
-			value, err := strconv.ParseFloat(lhsToken.Literal, 64)
-			if err != nil {
-				return nil, fmt.Errorf("failed to parse an atom: %w", err)
-			}
-			lhs = newAtomicExpression(value)
+			lhs = newAtomicNumExpression(lhsToken.GetValue())
 		} else if lhsToken.IsOperator() {
 			// Handle parentheses and EOF tokens
-			if lhsToken.IsLeftParen() {
+			if lhsToken.IsOPLeftParen() {
 				// If we encounter a left parenthesis, we need to parse
 				// the inside expression recursively as left-hand side
 				// and check for the right parenthesis.
@@ -137,19 +147,19 @@ func parseExpressions(lexer *Lexer, minBP float32) (*Expression, error) {
 				if err != nil {
 					return nil, fmt.Errorf("failed to parse expression: %w", err)
 				}
-				if lexer.Next().IsRightParen() {
+				if lexer.Next().IsOPRightParen() {
 					parenBalance--
 				} else if parenBalance > 0 {
 					// Return an error if we don't find a matching right parenthesis
 					return nil, ErrMissingRightParenthesis
 				}
-			} else if lhsToken.IsRightParen() {
+			} else if lhsToken.IsOPRightParen() {
 				parenBalance--
 			}
 		} else if lhsToken.IsEOF() {
 			return nil, nil
 		} else {
-			return nil, fmt.Errorf("unexpected token: %s", lhsToken.Literal)
+			return nil, fmt.Errorf("unexpected token: %s", lhsToken.literal)
 		}
 
 		for {
@@ -157,7 +167,7 @@ func parseExpressions(lexer *Lexer, minBP float32) (*Expression, error) {
 			op := lexer.Peek()
 			if op.IsEOF() {
 				break
-			} else if op.IsRightParen() {
+			} else if op.IsOPRightParen() {
 				// Return an error if we find a right parenthesis
 				// without a matching left parenthesis
 				if parenBalance == 0 {
@@ -168,7 +178,7 @@ func parseExpressions(lexer *Lexer, minBP float32) (*Expression, error) {
 
 			// Stop parsing the right-hand side expression if the left-hand side
 			// binding power of this operator is less than the minimum binding power
-			lBP, rBP, err := infixBindingPower(op.Type)
+			lBP, rBP, err := infixBindingPower(op.GetType())
 			if err != nil {
 				return nil, fmt.Errorf("failed to get binding power: %w", err)
 			}
@@ -182,7 +192,7 @@ func parseExpressions(lexer *Lexer, minBP float32) (*Expression, error) {
 			if err != nil {
 				return nil, fmt.Errorf("failed to parse right-hand side: %w", err)
 			}
-			lhs = newOperationExpression(op.Type, lhs, rhs)
+			lhs = newOperationExpression(op.GetType(), lhs, rhs)
 		}
 
 		return lhs, nil

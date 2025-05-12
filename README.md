@@ -24,6 +24,12 @@ Based on Pratt parsing and [jdvillal/parser](https://github.com/jdvillal/parser/
 
 ---
 
+## Download the `golang.org/x/term` package
+
+```bash
+go mod tidy
+```
+
 ## Test
 
 ```bash

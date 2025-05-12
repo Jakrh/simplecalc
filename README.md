@@ -41,3 +41,20 @@ go test -v ./...
 ```bash
 go run .
 ```
+
+## Usage
+
+After starting the calculator, you can type expressions directly into the interactive terminal, assign variables, or use built-in commands.
+
+For example:
+
+```
+Enter an expression (or 'exit' to quit):
+>>> 2 * (12.4 / (7 + -2))
+4.96
+>>> x = 10
+>>> x * 3
+30
+```
+
+Input `help` to see a list of available commands, supported operators, and syntax information.

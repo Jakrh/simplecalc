@@ -10,6 +10,30 @@ import (
 	"simplecalc/pkg/terminal"
 )
 
+func help() {
+	msg := `Simple Calculator
+Commands:
+  - help: Show this help message
+  - exit: Exit the calculator
+  - history: Show the command history
+  - clear: Clear the history
+  - <expression>: Evaluate the expression
+  - <var> = <expression>: Assign the expression to the variable
+  - <var>: Show the value of the variable
+Examples:
+  >>> 2 + 6
+  >>> x = 7 + 8
+  >>> y = x * 2
+  >>> z = x / (2.5 * (-6 + y))
+  >>> z
+`
+
+	// Add CRLF to each line
+	lines := strings.ReplaceAll(msg, "\n", "\r\n")
+
+	fmt.Print(lines)
+}
+
 func main() {
 	t, err := terminal.NewTerminal(os.Stdin, ">>> ")
 	if err != nil {
@@ -37,6 +61,9 @@ func main() {
 			continue
 		case "exit":
 			return
+		case "help":
+			help()
+			continue
 		case "history":
 			fmt.Printf("%s\r\n", t.GetHistory())
 			continue

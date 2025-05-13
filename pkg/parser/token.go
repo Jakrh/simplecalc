@@ -166,6 +166,24 @@ func (t Token) GetType() TokenType {
 	return t.typ
 }
 
+func (t Token) IsInfixOperator() bool {
+	switch t.typ {
+	case TokenAssign, TokenPlus, TokenMinus, TokenMultiply, TokenDivide:
+		return true
+	default:
+		return false
+	}
+}
+
+func (t Token) IsPrefixOperator() bool {
+	switch t.typ {
+	case TokenPlus, TokenMinus:
+		return true
+	default:
+		return false
+	}
+}
+
 // GetInfixBindingPower returns the left and right binding powers of an infix operator.
 // Two different binding powers determine the ordering behavior to ensure predictable
 // and testable parsing.
@@ -179,5 +197,16 @@ func (t Token) GetInfixBindingPower() (float32, float32, error) {
 		return 2.0, 2.1, nil
 	default:
 		return 0, 0, fmt.Errorf("unknown infix operator: '%s'", t.typ)
+	}
+}
+
+// GetPrefixBindingPower returns the right-hand side binding power
+// of the prefix operator, because it's right associative only
+func (t Token) GetPrefixBindingPower() (float32, error) {
+	switch t.typ {
+	case TokenPlus, TokenMinus:
+		return 3.0, nil
+	default:
+		return 0, fmt.Errorf("unknown prefix operator: '%s'", t.typ)
 	}
 }

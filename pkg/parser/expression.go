@@ -264,6 +264,24 @@ func parseExpressions(lexer *Lexer, minBP float32) (*Expression, error) {
 				}
 			} else if lhsToken.IsOPRightParen() {
 				parenBalance--
+			} else if lhsToken.IsPrefixOperator() {
+				rBP, err := lhsToken.GetPrefixBindingPower()
+				if err != nil {
+					return nil, fmt.Errorf("failed to get prefix binding power: %w", err)
+				}
+				lhs, err = parse(lexer, rBP)
+				if err != nil {
+					return nil, fmt.Errorf("failed to parse expression: %w", err)
+				}
+				if lhs == nil {
+					return nil,
+						fmt.Errorf("missing left-hand side expression from prefix operator: %s",
+							lhsToken.GetType())
+				}
+				// Add a new operation expression with the prefix operator and 0 as the left operand,
+				// the parsed expression as the right operand.
+				// This is to handle cases like "-x" as "(- 0 x) and "+x" as "(+ 0 x)".
+				lhs = newOperationExpression(lhsToken.GetType(), newAtomicNumExpression(0), lhs)
 			}
 		} else if lhsToken.IsEOF() {
 			return nil, nil

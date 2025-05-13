@@ -39,34 +39,6 @@ func (l *Lexer) parseTokens(input string) error {
 		return r
 	}, input)
 
-	// Check if the current token is a negative number
-	// This is to handle cases like "-5", "(-5+3)", "-3-1", "-.5" and "-5.3".
-	isNegativeNumber := func() bool {
-		// Check ether if the current character is a '-' and the next character is a digit
-		if ((l.cursor < len(input)-1 && input[l.cursor] == '-' &&
-			unicode.IsDigit(rune(input[l.cursor+1]))) ||
-
-			// Or
-			// If the current character is a '-' and the next character
-			// is a '.' and the next character of '.' is a digit
-			(l.cursor < len(input)-2 && input[l.cursor] == '-' &&
-				input[l.cursor+1] == '.' &&
-				unicode.IsDigit(rune(input[l.cursor+2])))) &&
-
-			// And must be
-			// Check the current char is either the start of the input
-			// or the previous token is a left parenthesis or an arithmetic operator
-			// or an assignment operator
-			(l.cursor == 0 || l.tokens[len(l.tokens)-1].IsOPLeftParen() ||
-				l.tokens[len(l.tokens)-1].IsArithmeticOperator() ||
-				l.tokens[len(l.tokens)-1].IsOPAssign()) {
-
-			return true
-		}
-
-		return false
-	}
-
 	// lexer.cursor has two purposes:
 	// 1. It is used to track the current position in the input string
 	// 2. It is used to track the current position in the tokens slice
@@ -84,26 +56,6 @@ func (l *Lexer) parseTokens(input string) error {
 			l.tokens = append(l.tokens, NewOPToken(TokenPlus, string(char)))
 			l.cursor++
 		case '-':
-			// Check if a negative number
-			if isNegativeNumber() {
-				err := l.readNumber(input)
-				if err != nil {
-					return fmt.Errorf("failed to read number: %w", err)
-				}
-				continue
-			}
-
-			// Check if a variable name with a negative sign
-			if l.cursor < len(input)-1 &&
-				(input[l.cursor+1] == '_' || unicode.IsLetter(rune(input[l.cursor+1]))) {
-				err := l.readVarName(input, true)
-				if err != nil {
-					return fmt.Errorf("failed to read variable name: %w", err)
-				}
-				continue
-			}
-
-			// If not a negative number, treat it as a minus operator
 			l.tokens = append(l.tokens, NewOPToken(TokenMinus, string(char)))
 			l.cursor++
 		case '*':

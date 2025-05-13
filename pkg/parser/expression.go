@@ -287,7 +287,7 @@ func parseExpressions(lexer *Lexer, minBP float32) (*Expression, error) {
 
 			// Stop parsing the right-hand side expression if the left-hand side
 			// binding power of this operator is less than the minimum binding power
-			lBP, rBP, err := infixBindingPower(op.GetType())
+			lBP, rBP, err := op.GetInfixBindingPower()
 			if err != nil {
 				return nil, fmt.Errorf("failed to get binding power: %w", err)
 			}
@@ -318,17 +318,4 @@ func parseExpressions(lexer *Lexer, minBP float32) (*Expression, error) {
 	}
 
 	return expr, nil
-}
-
-func infixBindingPower(op TokenType) (float32, float32, error) {
-	switch op {
-	case TokenAssign:
-		return 0.2, 0.1, nil
-	case TokenPlus, TokenMinus:
-		return 1.0, 1.1, nil
-	case TokenMultiply, TokenDivide:
-		return 2.0, 2.1, nil
-	default:
-		return 0, 0, fmt.Errorf("unknown operator: '%s'", op)
-	}
 }

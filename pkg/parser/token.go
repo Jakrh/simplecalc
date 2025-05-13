@@ -165,3 +165,19 @@ func (t Token) GetValue() float64 {
 func (t Token) GetType() TokenType {
 	return t.typ
 }
+
+// GetInfixBindingPower returns the left and right binding powers of an infix operator.
+// Two different binding powers determine the ordering behavior to ensure predictable
+// and testable parsing.
+func (t Token) GetInfixBindingPower() (float32, float32, error) {
+	switch t.typ {
+	case TokenAssign:
+		return 0.2, 0.1, nil
+	case TokenPlus, TokenMinus:
+		return 1.0, 1.1, nil
+	case TokenMultiply, TokenDivide:
+		return 2.0, 2.1, nil
+	default:
+		return 0, 0, fmt.Errorf("unknown infix operator: '%s'", t.typ)
+	}
+}

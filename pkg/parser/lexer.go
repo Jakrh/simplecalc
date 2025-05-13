@@ -50,25 +50,25 @@ func (l *Lexer) parseTokens(input string) error {
 		char := input[l.cursor]
 		switch char {
 		case '=':
-			l.tokens = append(l.tokens, NewOPToken(TokenAssign, string(char)))
+			l.tokens = append(l.tokens, NewOPToken(TokenAssign))
 			l.cursor++
 		case '+':
-			l.tokens = append(l.tokens, NewOPToken(TokenPlus, string(char)))
+			l.tokens = append(l.tokens, NewOPToken(TokenPlus))
 			l.cursor++
 		case '-':
-			l.tokens = append(l.tokens, NewOPToken(TokenMinus, string(char)))
+			l.tokens = append(l.tokens, NewOPToken(TokenMinus))
 			l.cursor++
 		case '*':
-			l.tokens = append(l.tokens, NewOPToken(TokenMultiply, string(char)))
+			l.tokens = append(l.tokens, NewOPToken(TokenMultiply))
 			l.cursor++
 		case '/':
-			l.tokens = append(l.tokens, NewOPToken(TokenDivide, string(char)))
+			l.tokens = append(l.tokens, NewOPToken(TokenDivide))
 			l.cursor++
 		case '(':
-			l.tokens = append(l.tokens, NewOPToken(TokenLeftParen, string(char)))
+			l.tokens = append(l.tokens, NewOPToken(TokenLeftParen))
 			l.cursor++
 		case ')':
-			l.tokens = append(l.tokens, NewOPToken(TokenRightParen, string(char)))
+			l.tokens = append(l.tokens, NewOPToken(TokenRightParen))
 			l.cursor++
 		case '.':
 			if l.cursor < len(input)-1 && unicode.IsDigit(rune(input[l.cursor+1])) {

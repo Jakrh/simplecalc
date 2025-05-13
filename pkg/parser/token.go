@@ -86,10 +86,9 @@ func NewAtomNumToken(literal string) Token {
 }
 
 // NewOPToken creates a new operator token.
-func NewOPToken(tokenType TokenType, literal string) Token {
+func NewOPToken(tokenType TokenType) Token {
 	return Token{
-		typ:     tokenType,
-		literal: literal,
+		typ: tokenType,
 	}
 }
 

@@ -202,6 +202,24 @@ func TestNewExpressionFromLexer(t *testing.T) {
 			want:    "(/ (- 0 (** (** (* 2.5 x) 6) y)) (** 0.5 3))",
 			wantErr: nil,
 		},
+		{
+			name:    "simple modulo operation",
+			input:   "5 % 2",
+			want:    "(% 5 2)",
+			wantErr: nil,
+		},
+		{
+			name:    "modulo operation with negative number and parentheses",
+			input:   "(5 + 3) % -2",
+			want:    "(% (+ 5 3) (- 0 2))",
+			wantErr: nil,
+		},
+		{
+			name:    "modulo operation with decimal number and parentheses",
+			input:   "(5.5 + 3) % 2.5",
+			want:    "(% (+ 5.5 3) 2.5)",
+			wantErr: nil,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -468,6 +486,24 @@ func TestExpressionEvaluate(t *testing.T) {
 			input:   "2 + ",
 			want:    0,
 			wantErr: operator.ErrInvalidOperandCount,
+		},
+		{
+			name:    "simple modulo operation",
+			input:   "5 % 2",
+			want:    1,
+			wantErr: nil,
+		},
+		{
+			name:    "modulo operation with negative number and parentheses",
+			input:   "(5 + 3) % -2",
+			want:    0,
+			wantErr: nil,
+		},
+		{
+			name:    "modulo operation with decimal number and parentheses",
+			input:   "(5.5 + 3) % 2.5",
+			want:    0,
+			wantErr: operator.ErrInvalidOperand,
 		},
 	}
 	for _, tt := range tests {

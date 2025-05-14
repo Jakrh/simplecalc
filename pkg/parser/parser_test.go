@@ -147,6 +147,18 @@ func TestParser_Parse_MultiLine(t *testing.T) {
 			want:    []float64{-64.0},
 			wantErr: nil,
 		},
+		{
+			name:    "modulo operation with negative number and parentheses",
+			input:   "x = (5 + 3) % -2; x",
+			want:    []float64{0},
+			wantErr: nil,
+		},
+		{
+			name:    "modulo operation with decimal number and parentheses",
+			input:   "x = (5.5 + 3) % 2.5; x",
+			want:    []float64{},
+			wantErr: operator.ErrInvalidOperand,
+		},
 	}
 
 	for _, tt := range tests {

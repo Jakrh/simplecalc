@@ -12,6 +12,7 @@ Based on Pratt parsing and [jdvillal/parser](https://github.com/jdvillal/parser/
 * `-`
 * `*`
 * `/`
+* `%`
 * `**`
 * `(` and `)`
 

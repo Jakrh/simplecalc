@@ -482,6 +482,48 @@ func TestLexer(t *testing.T) {
 			},
 			wantErr: false,
 		},
+		{
+			name:  "simple modulo operation",
+			input: "5 % 2",
+			want: []parser.Token{
+				parser.NewAtomNumToken("5"),
+				parser.NewOPTokenByLiteral("%"),
+				parser.NewAtomNumToken("2"),
+				parser.NewEOFToken(),
+			},
+			wantErr: false,
+		},
+		{
+			name:  "modulo operation with negative number and parentheses",
+			input: "(5 + 3) % -2",
+			want: []parser.Token{
+				parser.NewOPTokenByLiteral("("),
+				parser.NewAtomNumToken("5"),
+				parser.NewOPTokenByLiteral("+"),
+				parser.NewAtomNumToken("3"),
+				parser.NewOPTokenByLiteral(")"),
+				parser.NewOPTokenByLiteral("%"),
+				parser.NewOPTokenByLiteral("-"),
+				parser.NewAtomNumToken("2"),
+				parser.NewEOFToken(),
+			},
+			wantErr: false,
+		},
+		{
+			name:  "modulo operation with decimal number and parentheses",
+			input: "(5.5 + 3) % 2.5",
+			want: []parser.Token{
+				parser.NewOPTokenByLiteral("("),
+				parser.NewAtomNumToken("5.5"),
+				parser.NewOPTokenByLiteral("+"),
+				parser.NewAtomNumToken("3"),
+				parser.NewOPTokenByLiteral(")"),
+				parser.NewOPTokenByLiteral("%"),
+				parser.NewAtomNumToken("2.5"),
+				parser.NewEOFToken(),
+			},
+			wantErr: false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

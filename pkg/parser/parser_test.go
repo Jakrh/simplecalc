@@ -110,6 +110,31 @@ func TestParser_Parse_MultiLine(t *testing.T) {
 			input: "  a = 5 ; ; b = a + 5 ;  b * 2  ",
 			want:  []float64{20},
 		},
+		{
+			name:  "round if approximate to integer",
+			input: "1.99999999999",
+			want:  []float64{2},
+		},
+		{
+			name:  "round negative number if approximate to integer",
+			input: "-1.99999999999",
+			want:  []float64{-2},
+		},
+		{
+			name:  "round negative number with a small decimal if approximate to integer",
+			input: "-2.00000000001",
+			want:  []float64{-2},
+		},
+		{
+			name:  "not round if not approximate to integer",
+			input: "1.9999999999",
+			want:  []float64{1.9999999999},
+		},
+		{
+			name:  "not round negative number if not approximate to integer",
+			input: "-1.9999999999",
+			want:  []float64{-1.9999999999},
+		},
 	}
 
 	for _, tt := range tests {

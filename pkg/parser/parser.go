@@ -2,8 +2,11 @@ package parser
 
 import (
 	"fmt"
+	"math"
 	"strings"
 )
+
+const IntApproxTolerance = 1e-10
 
 type Parser struct {
 	variables map[string]float64
@@ -51,6 +54,14 @@ func (p *Parser) Parse(input string) ([]float64, error) {
 		if err != nil {
 			return nil, fmt.Errorf("error evaluating expression: %w", err)
 		}
+
+		// Check if the result is approximately an integer for display
+		// This is to handle cases like 1.99999999999 to 2
+		rounded := math.Round(result)
+		if math.Abs(rounded-result) < IntApproxTolerance {
+			result = rounded
+		}
+
 		results = append(results, result)
 	}
 

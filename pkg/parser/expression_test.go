@@ -414,7 +414,7 @@ func TestExpressionEvaluate(t *testing.T) {
 			if tt.wantErr != nil {
 				return
 			}
-			if math.Abs(got-tt.want) > 1e-9 {
+			if math.Abs(got-tt.want) > parser.IntApproxTolerance {
 				t.Errorf("Evaluate() = %v, want %v", got, tt.want)
 			}
 		})

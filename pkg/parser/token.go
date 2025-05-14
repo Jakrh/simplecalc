@@ -56,6 +56,7 @@ var (
 		TokenPower:      true,
 		TokenLeftParen:  true,
 		TokenRightParen: true,
+		TokenAssign:     true,
 	}
 
 	arithmeticOperators = map[TokenType]bool{

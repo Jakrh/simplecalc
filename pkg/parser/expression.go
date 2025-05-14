@@ -259,7 +259,7 @@ func parseExpressions(lexer *Lexer, minBP float32) (*Expression, error) {
 				if err != nil {
 					return nil, fmt.Errorf("failed to parse expression: %w", err)
 				}
-				if lexer.Next().IsOPRightParen() {
+				if next := lexer.Next(); next.IsOperator() && next.IsOPRightParen() {
 					parenBalance--
 				} else if parenBalance > 0 {
 					// Return an error if we don't find a matching right parenthesis
@@ -297,6 +297,8 @@ func parseExpressions(lexer *Lexer, minBP float32) (*Expression, error) {
 			op := lexer.Peek()
 			if op.IsEOF() {
 				break
+			} else if !op.IsOperator() {
+				return nil, fmt.Errorf("invalid operator: '%s'", op.literal)
 			} else if op.IsOPRightParen() {
 				// Return an error if we find a right parenthesis
 				// without a matching left parenthesis

@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"strings"
 	"unicode"
+
+	"simplecalc/pkg/parser/operator"
 )
 
 type Lexer struct {
@@ -50,7 +52,7 @@ func (l *Lexer) parseTokens(input string) error {
 		char := input[l.cursor]
 
 		// Return operator and new cursor if char is an operator
-		op, newCursor := LexWithOperator(&input, l.cursor)
+		op, newCursor := operator.LexWithOperator(&input, l.cursor)
 		if op != nil {
 			l.tokens = append(l.tokens, NewOPToken(op))
 			l.cursor = newCursor

@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"simplecalc/pkg/parser"
+	"simplecalc/pkg/parser/operator"
 )
 
 func TestNewExpressionFromLexer(t *testing.T) {
@@ -269,7 +270,7 @@ func TestExpressionEvaluate(t *testing.T) {
 			name:    "division by zero",
 			input:   "1 / 0",
 			want:    0,
-			wantErr: parser.ErrDivisionByZero,
+			wantErr: operator.ErrDivisionByZero,
 		},
 		{
 			name:    "complex ops",
@@ -466,7 +467,7 @@ func TestExpressionEvaluate(t *testing.T) {
 			name:    "trailing operator",
 			input:   "2 + ",
 			want:    0,
-			wantErr: parser.ErrInvalidOperandCount,
+			wantErr: operator.ErrInvalidOperandCount,
 		},
 	}
 	for _, tt := range tests {

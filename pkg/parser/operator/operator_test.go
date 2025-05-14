@@ -1,9 +1,9 @@
-package parser_test
+package operator_test
 
 import (
 	"testing"
 
-	"simplecalc/pkg/parser"
+	op "simplecalc/pkg/parser/operator"
 )
 
 func TestLexWithOperator(t *testing.T) {
@@ -12,7 +12,7 @@ func TestLexWithOperator(t *testing.T) {
 		cursor int
 	}
 	type output struct {
-		parser.Operator
+		op.Operator
 		newCursor int
 	}
 	tests := []struct {
@@ -27,7 +27,7 @@ func TestLexWithOperator(t *testing.T) {
 				cursor: 1,
 			},
 			want: output{
-				Operator:  parser.GetOperator("+"),
+				Operator:  op.GetOperator("+"),
 				newCursor: 2,
 			},
 		},
@@ -38,7 +38,7 @@ func TestLexWithOperator(t *testing.T) {
 				cursor: 1,
 			},
 			want: output{
-				Operator:  parser.GetOperator("-"),
+				Operator:  op.GetOperator("-"),
 				newCursor: 2,
 			},
 		},
@@ -49,7 +49,7 @@ func TestLexWithOperator(t *testing.T) {
 				cursor: 1,
 			},
 			want: output{
-				Operator:  parser.GetOperator("*"),
+				Operator:  op.GetOperator("*"),
 				newCursor: 2,
 			},
 		},
@@ -60,7 +60,7 @@ func TestLexWithOperator(t *testing.T) {
 				cursor: 1,
 			},
 			want: output{
-				Operator:  parser.GetOperator("/"),
+				Operator:  op.GetOperator("/"),
 				newCursor: 2,
 			},
 		},
@@ -71,7 +71,7 @@ func TestLexWithOperator(t *testing.T) {
 				cursor: 1,
 			},
 			want: output{
-				Operator:  parser.GetOperator("**"),
+				Operator:  op.GetOperator("**"),
 				newCursor: 3,
 			},
 		},
@@ -111,7 +111,7 @@ func TestLexWithOperator(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			op, cursor := parser.LexWithOperator(&test.input.input, test.input.cursor)
+			op, cursor := op.LexWithOperator(&test.input.input, test.input.cursor)
 			if op != test.want.Operator {
 				t.Errorf("got operator '%s', want '%s'", op, test.want.Operator)
 			}

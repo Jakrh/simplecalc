@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"simplecalc/pkg/parser"
+	"simplecalc/pkg/parser/operator"
 )
 
 func TestParser_Parse_MultiLine(t *testing.T) {
@@ -73,12 +74,12 @@ func TestParser_Parse_MultiLine(t *testing.T) {
 		{
 			name:    "error in later statement",
 			input:   "a = 1; 1 / 0",
-			wantErr: parser.ErrDivisionByZero,
+			wantErr: operator.ErrDivisionByZero,
 		},
 		{
 			name:    "error in first statement",
 			input:   "1 / 0; a = 1",
-			wantErr: parser.ErrDivisionByZero,
+			wantErr: operator.ErrDivisionByZero,
 		},
 		{
 			name:  "complex multi-line with assignments and evaluation",

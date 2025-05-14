@@ -3,6 +3,8 @@ package parser
 import (
 	"fmt"
 	"strconv"
+
+	"simplecalc/pkg/parser/operator"
 )
 
 type TokenType uint8
@@ -29,7 +31,7 @@ func (tt TokenType) String() string {
 type Token struct {
 	typ        TokenType
 	literal    string
-	operator   Operator
+	operator   operator.Operator
 	isVariable bool
 }
 
@@ -63,7 +65,7 @@ func NewAtomNumToken(literal string) Token {
 }
 
 // NewOPToken creates a new operator token.
-func NewOPToken(op Operator) Token {
+func NewOPToken(op operator.Operator) Token {
 	return Token{
 		typ:      TokenOperator,
 		operator: op,
@@ -75,7 +77,7 @@ func NewOPToken(op Operator) Token {
 func NewOPTokenByLiteral(literal string) Token {
 	return Token{
 		typ:      TokenOperator,
-		operator: GetOperator(literal),
+		operator: operator.GetOperator(literal),
 		literal:  literal,
 	}
 }
@@ -153,7 +155,7 @@ func (t Token) GetType() TokenType {
 	return t.typ
 }
 
-func (t Token) GetOperator() Operator {
+func (t Token) GetOperator() operator.Operator {
 	if t.typ != TokenOperator {
 		panic(fmt.Sprintf("'%s' (%s) is not a operator", t.literal, t.typ))
 	}

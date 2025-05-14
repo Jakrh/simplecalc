@@ -3,6 +3,8 @@ package parser
 import (
 	"fmt"
 	"strconv"
+
+	"simplecalc/pkg/parser/operator"
 )
 
 type ExprType uint8
@@ -23,7 +25,7 @@ type Expression struct {
 	typ          ExprType
 	value        float64
 	variableName string
-	op           Operator
+	op           operator.Operator
 	left         *Expression
 	right        *Expression
 }
@@ -142,7 +144,7 @@ func newAtomicNumExpression(value float64) *Expression {
 	}
 }
 
-func newOperationExpression(op Operator, left, right *Expression) *Expression {
+func newOperationExpression(op operator.Operator, left, right *Expression) *Expression {
 	return &Expression{
 		typ:   ExprTypeOperation,
 		op:    op,

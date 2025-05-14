@@ -2,7 +2,6 @@ package parser
 
 import (
 	"fmt"
-	"math"
 	"strconv"
 )
 
@@ -15,7 +14,6 @@ const (
 
 var (
 	ErrNilExpression           = fmt.Errorf("expression is nil")
-	ErrDivisionByZero          = fmt.Errorf("division by zero")
 	ErrMissingLeftParenthesis  = fmt.Errorf("missing left parenthesis")
 	ErrMissingRightParenthesis = fmt.Errorf("missing right parenthesis")
 	ErrNumOutOfRange           = fmt.Errorf("number is too large/small that lost percision in float64")
@@ -25,7 +23,7 @@ type Expression struct {
 	typ          ExprType
 	value        float64
 	variableName string
-	op           TokenType
+	op           Operator
 	left         *Expression
 	right        *Expression
 }
@@ -80,39 +78,29 @@ func (e *Expression) evaluate(variables map[string]float64) (float64, error) {
 	}
 
 	// If the expression is an operation, evaluate the left and right expressions
-	var leftValue, rightValue float64
-	var err error
-	if e.left != nil {
-		leftValue, err = e.left.Evaluate(variables)
-		if err != nil {
-			return 0, fmt.Errorf("failed to evaluate left expression: %w", err)
-		}
+	if e.left == nil {
+		return 0, fmt.Errorf("no left expression for operation: %s", e.op)
 	}
+	oprands := make([]float64, 0, 2)
+	leftValue, err := e.left.Evaluate(variables)
+	if err != nil {
+		return 0, fmt.Errorf("failed to evaluate left expression: %w", err)
+	}
+	oprands = append(oprands, leftValue)
 	if e.right != nil {
-		rightValue, err = e.right.Evaluate(variables)
+		rightValue, err := e.right.Evaluate(variables)
 		if err != nil {
 			return 0, fmt.Errorf("failed to evaluate right expression: %w", err)
 		}
+		oprands = append(oprands, rightValue)
 	}
-	switch e.op {
-	case TokenAssign:
-		return 0, nil
-	case TokenPlus:
-		return leftValue + rightValue, nil
-	case TokenMinus:
-		return leftValue - rightValue, nil
-	case TokenMultiply:
-		return leftValue * rightValue, nil
-	case TokenDivide:
-		if rightValue == 0 {
-			return 0, ErrDivisionByZero
-		}
-		return leftValue / rightValue, nil
-	case TokenPower:
-		return math.Pow(leftValue, rightValue), nil
-	default:
-		return 0, fmt.Errorf("unknown operator: %s", e.op)
+
+	op := e.op
+	if op == nil {
+		return 0, fmt.Errorf("operator is nil for expression: %s", e)
 	}
+
+	return op.Evaluate(oprands)
 }
 
 func (e *Expression) String() string {
@@ -154,7 +142,7 @@ func newAtomicNumExpression(value float64) *Expression {
 	}
 }
 
-func newOperationExpression(op TokenType, left, right *Expression) *Expression {
+func newOperationExpression(op Operator, left, right *Expression) *Expression {
 	return &Expression{
 		typ:   ExprTypeOperation,
 		op:    op,
@@ -177,7 +165,7 @@ func (e *Expression) IsAtomVarName() bool {
 }
 
 func (e *Expression) IsOPAssignment() bool {
-	return e != nil && e.IsOperation() && e.op == TokenAssign
+	return e != nil && e.IsOperation() && e.op.Is("=")
 }
 
 // GetVarName returns the variable name of the expression
@@ -249,7 +237,7 @@ func parseExpressions(lexer *Lexer, minBP float32) (*Expression, error) {
 			}
 		} else if lhsToken.IsOperator() {
 			// Handle parentheses and EOF tokens
-			if lhsToken.IsOPLeftParen() {
+			if lhsToken.IsTheOperator("(") {
 				// If we encounter a left parenthesis, we need to parse
 				// the inside expression recursively as left-hand side
 				// and check for the right parenthesis.
@@ -259,13 +247,13 @@ func parseExpressions(lexer *Lexer, minBP float32) (*Expression, error) {
 				if err != nil {
 					return nil, fmt.Errorf("failed to parse expression: %w", err)
 				}
-				if next := lexer.Next(); next.IsOperator() && next.IsOPRightParen() {
+				if next := lexer.Next(); next.IsOperator() && next.IsTheOperator(")") {
 					parenBalance--
 				} else if parenBalance > 0 {
 					// Return an error if we don't find a matching right parenthesis
 					return nil, ErrMissingRightParenthesis
 				}
-			} else if lhsToken.IsOPRightParen() {
+			} else if lhsToken.IsTheOperator(")") {
 				parenBalance--
 			} else if lhsToken.IsPrefixOperator() {
 				rBP, err := lhsToken.GetPrefixBindingPower()
@@ -284,7 +272,7 @@ func parseExpressions(lexer *Lexer, minBP float32) (*Expression, error) {
 				// Add a new operation expression with the prefix operator and 0 as the left operand,
 				// the parsed expression as the right operand.
 				// This is to handle cases like "-x" as "(- 0 x) and "+x" as "(+ 0 x)".
-				lhs = newOperationExpression(lhsToken.GetType(), newAtomicNumExpression(0), lhs)
+				lhs = newOperationExpression(lhsToken.GetOperator(), newAtomicNumExpression(0), lhs)
 			}
 		} else if lhsToken.IsEOF() {
 			return nil, nil
@@ -298,8 +286,8 @@ func parseExpressions(lexer *Lexer, minBP float32) (*Expression, error) {
 			if op.IsEOF() {
 				break
 			} else if !op.IsOperator() {
-				return nil, fmt.Errorf("invalid operator: '%s'", op.literal)
-			} else if op.IsOPRightParen() {
+				return nil, fmt.Errorf("invalid operator: '%s'", op)
+			} else if op.IsTheOperator(")") {
 				// Return an error if we find a right parenthesis
 				// without a matching left parenthesis
 				if parenBalance == 0 {
@@ -324,7 +312,7 @@ func parseExpressions(lexer *Lexer, minBP float32) (*Expression, error) {
 			if err != nil {
 				return nil, fmt.Errorf("failed to parse right-hand side: %w", err)
 			}
-			lhs = newOperationExpression(op.GetType(), lhs, rhs)
+			lhs = newOperationExpression(op.GetOperator(), lhs, rhs)
 		}
 
 		return lhs, nil

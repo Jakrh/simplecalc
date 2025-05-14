@@ -48,35 +48,17 @@ func (l *Lexer) parseTokens(input string) error {
 
 	for l.cursor < len(input) {
 		char := input[l.cursor]
+
+		// Return operator and new cursor if char is an operator
+		op, newCursor := LexWithOperator(&input, l.cursor)
+		if op != nil {
+			l.tokens = append(l.tokens, NewOPToken(op))
+			l.cursor = newCursor
+			continue
+		}
+
+		// If char is not an operator, we need to check if it's a number or a variable name
 		switch char {
-		case '=':
-			l.tokens = append(l.tokens, NewOPToken(TokenAssign))
-			l.cursor++
-		case '+':
-			l.tokens = append(l.tokens, NewOPToken(TokenPlus))
-			l.cursor++
-		case '-':
-			l.tokens = append(l.tokens, NewOPToken(TokenMinus))
-			l.cursor++
-		case '*':
-			// Check for double asterisk (power operator)
-			if l.cursor < len(input)-1 && input[l.cursor+1] == '*' {
-				l.tokens = append(l.tokens, NewOPToken(TokenPower))
-				l.cursor += 2
-				continue
-			}
-			// Treat single asterisk as multiplication operator
-			l.tokens = append(l.tokens, NewOPToken(TokenMultiply))
-			l.cursor++
-		case '/':
-			l.tokens = append(l.tokens, NewOPToken(TokenDivide))
-			l.cursor++
-		case '(':
-			l.tokens = append(l.tokens, NewOPToken(TokenLeftParen))
-			l.cursor++
-		case ')':
-			l.tokens = append(l.tokens, NewOPToken(TokenRightParen))
-			l.cursor++
 		case '.':
 			if l.cursor < len(input)-1 && unicode.IsDigit(rune(input[l.cursor+1])) {
 				err := l.readNumber(input)

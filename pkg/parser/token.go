@@ -10,14 +10,7 @@ type TokenType uint8
 const (
 	TokenEOF TokenType = iota
 	TokenAtom
-	TokenPlus
-	TokenMinus
-	TokenMultiply
-	TokenDivide
-	TokenPower
-	TokenLeftParen
-	TokenRightParen
-	TokenAssign
+	TokenOperator
 )
 
 func (tt TokenType) String() string {
@@ -26,51 +19,17 @@ func (tt TokenType) String() string {
 		return "EOF"
 	case TokenAtom:
 		return "Atom"
-	case TokenPlus:
-		return "+"
-	case TokenMinus:
-		return "-"
-	case TokenMultiply:
-		return "*"
-	case TokenDivide:
-		return "/"
-	case TokenPower:
-		return "**"
-	case TokenLeftParen:
-		return "("
-	case TokenRightParen:
-		return ")"
-	case TokenAssign:
-		return "="
+	case TokenOperator:
+		return "Operator"
 	default:
 		return "Unknown"
 	}
 }
 
-var (
-	operators = map[TokenType]bool{
-		TokenPlus:       true,
-		TokenMinus:      true,
-		TokenMultiply:   true,
-		TokenDivide:     true,
-		TokenPower:      true,
-		TokenLeftParen:  true,
-		TokenRightParen: true,
-		TokenAssign:     true,
-	}
-
-	arithmeticOperators = map[TokenType]bool{
-		TokenPlus:     true,
-		TokenMinus:    true,
-		TokenMultiply: true,
-		TokenDivide:   true,
-		TokenPower:    true,
-	}
-)
-
 type Token struct {
 	typ        TokenType
 	literal    string
+	operator   Operator
 	isVariable bool
 }
 
@@ -83,8 +42,20 @@ func NewAtomVarToken(literal string) Token {
 	}
 }
 
+func (t Token) String() string {
+	if t.IsEOF() {
+		return TokenEOF.String()
+	}
+
+	return t.literal
+}
+
 // NewAtomNumToken creates a new number atom token.
 func NewAtomNumToken(literal string) Token {
+	if literal == "" {
+		panic("literal is empty")
+	}
+
 	return Token{
 		typ:     TokenAtom,
 		literal: literal,
@@ -92,9 +63,20 @@ func NewAtomNumToken(literal string) Token {
 }
 
 // NewOPToken creates a new operator token.
-func NewOPToken(tokenType TokenType) Token {
+func NewOPToken(op Operator) Token {
 	return Token{
-		typ: tokenType,
+		typ:      TokenOperator,
+		operator: op,
+		literal:  op.GetLiteral(),
+	}
+}
+
+// NewOPTokenByLiteral creates a new operator token by literal.
+func NewOPTokenByLiteral(literal string) Token {
+	return Token{
+		typ:      TokenOperator,
+		operator: GetOperator(literal),
+		literal:  literal,
 	}
 }
 
@@ -110,7 +92,7 @@ func (t Token) IsAtom() bool {
 }
 
 func (t Token) IsOperator() bool {
-	return operators[t.typ]
+	return t.operator != nil
 }
 
 func (t Token) IsAtomVariable() bool {
@@ -118,19 +100,19 @@ func (t Token) IsAtomVariable() bool {
 }
 
 func (t Token) IsArithmeticOperator() bool {
-	return arithmeticOperators[t.typ]
+	if t.typ != TokenOperator {
+		panic(fmt.Sprintf("'%s' (%s) is not a operator", t.literal, t.typ))
+	}
+
+	return t.operator.IsArithmeticOperator()
 }
 
-func (t Token) IsOPLeftParen() bool {
-	return t.typ == TokenLeftParen
-}
+func (t Token) IsTheOperator(literal string) bool {
+	if t.typ != TokenOperator {
+		panic(fmt.Sprintf("'%s' (%s) is not a operator", t.literal, t.typ))
+	}
 
-func (t Token) IsOPRightParen() bool {
-	return t.typ == TokenRightParen
-}
-
-func (t Token) IsOPAssign() bool {
-	return t.typ == TokenAssign
+	return t.operator.Is(literal)
 }
 
 func (t Token) IsEOF() bool {
@@ -171,49 +153,47 @@ func (t Token) GetType() TokenType {
 	return t.typ
 }
 
-func (t Token) IsInfixOperator() bool {
-	switch t.typ {
-	case TokenAssign, TokenPlus, TokenMinus, TokenMultiply, TokenDivide:
-		return true
-	default:
-		return false
+func (t Token) GetOperator() Operator {
+	if t.typ != TokenOperator {
+		panic(fmt.Sprintf("'%s' (%s) is not a operator", t.literal, t.typ))
 	}
+
+	return t.operator
+}
+
+func (t Token) IsInfixOperator() bool {
+	if t.typ != TokenOperator {
+		panic(fmt.Sprintf("'%s' (%s) is not a operator", t.literal, t.typ))
+	}
+
+	return t.operator.IsInfixOperator()
 }
 
 func (t Token) IsPrefixOperator() bool {
-	switch t.typ {
-	case TokenPlus, TokenMinus:
-		return true
-	default:
-		return false
+	if t.typ != TokenOperator {
+		panic(fmt.Sprintf("'%s' (%s) is not a operator", t.literal, t.typ))
 	}
+
+	return t.operator.IsPrefixOperator()
 }
 
 // GetInfixBindingPower returns the left and right binding powers of an infix operator.
 // Two different binding powers determine the ordering behavior to ensure predictable
 // and testable parsing.
 func (t Token) GetInfixBindingPower() (float32, float32, error) {
-	switch t.typ {
-	case TokenAssign:
-		return 0.2, 0.1, nil
-	case TokenPlus, TokenMinus:
-		return 1.0, 1.1, nil
-	case TokenMultiply, TokenDivide:
-		return 2.0, 2.1, nil
-	case TokenPower:
-		return 4.0, 4.1, nil
-	default:
-		return 0, 0, fmt.Errorf("unknown infix operator: '%s'", t.typ)
+	if t.typ != TokenOperator {
+		return 0, 0, fmt.Errorf("'%s' is not a operator", t.literal)
 	}
+
+	return t.operator.GetInfixBindingPower()
 }
 
 // GetPrefixBindingPower returns the right-hand side binding power
 // of the prefix operator, because it's right associative only
 func (t Token) GetPrefixBindingPower() (float32, error) {
-	switch t.typ {
-	case TokenPlus, TokenMinus:
-		return 3.0, nil
-	default:
-		return 0, fmt.Errorf("unknown prefix operator: '%s'", t.typ)
+	if t.typ != TokenOperator {
+		return 0, fmt.Errorf("'%s' is not a operator", t.literal)
 	}
+
+	return t.operator.GetPrefixBindingPower()
 }

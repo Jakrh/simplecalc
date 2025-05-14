@@ -462,6 +462,12 @@ func TestExpressionEvaluate(t *testing.T) {
 			wantErr:   nil,
 			variables: map[string]float64{"x": 1.6, "y": 0.25},
 		},
+		{
+			name:    "trailing operator",
+			input:   "2 + ",
+			want:    0,
+			wantErr: parser.ErrInvalidOperandCount,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

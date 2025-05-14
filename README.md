@@ -1,3 +1,5 @@
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/Jakrh/simplecalc)
+
 # Simple calculator
 
 Parse and calculate numbers from strings like `2 * (12.4 / (7 + -2))`, or multi-line inputs that separated by semicolons like `x = 2; y = 5.25; z = x * (3 + -y); z`.

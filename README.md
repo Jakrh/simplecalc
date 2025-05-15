@@ -29,6 +29,34 @@ Based on Pratt parsing and [jdvillal/parser](https://github.com/jdvillal/parser/
 
 ---
 
+## How it works
+
+The calculator processes an input in three stages:
+
+1. **Lex**: splits the input string into tokens.
+2. **Parse**: builds an `Expression` AST (Abstract Syntax Tree) from tokens with binding power of each operator.
+3. **Evaluate**: traverses the AST to compute the final result.
+
+**Example**
+
+0. Input
+
+    `-16 ** (.25 + (7 - -2) / 4)`
+
+1. Input -> Lex -> Tokens
+
+    `["-", "16", "**", "(", ".25", "+", "(", "7", "-", "-", "2", ")", "/", "4", ")"]`
+
+2. Tokens -> Parse -> Expression (binding powers: `**` > `-` negative sign,  `/` > `+` and `-`)
+
+    `(- 0 (** 16 (+ 0.25 (/ (- 7 (- 0 2)) 4))))`
+
+3. Evaluate -> result
+
+    `-1024`
+
+---
+
 ## Download the `golang.org/x/term` package
 
 ```bash

@@ -75,6 +75,12 @@ go test -v ./...
 go run .
 ```
 
+## Run with debug mode to observe each stage of processing
+
+```bash
+DEBUG=1 go run .
+```
+
 ## Usage
 
 After starting the calculator, you can type expressions directly into the interactive terminal, assign variables, or use built-in commands.

@@ -3,6 +3,8 @@ package parser
 import (
 	"fmt"
 	"math"
+	"os"
+	"strconv"
 	"strings"
 )
 
@@ -20,21 +22,37 @@ func NewParser() *Parser {
 
 func (p *Parser) Parse(input string) ([]float64, error) {
 	results := make([]float64, 0)
+	debug := os.Getenv("DEBUG") != ""
 
 	for stmt := range strings.SplitSeq(input, ";") {
-		stmt := strings.TrimSpace(stmt)
-		if stmt == "" {
+		trimedStmt := strings.TrimSpace(stmt)
+		if trimedStmt == "" {
 			continue
 		}
 
-		lexer, err := NewLexer(stmt)
+		// Show each statement if DEBUG is set
+		if debug {
+			fmt.Printf("[debug] Input: '%s'\r\n", trimedStmt)
+		}
+
+		lexer, err := NewLexer(trimedStmt)
 		if err != nil {
 			return nil, fmt.Errorf("error creating lexer: %w", err)
+		}
+
+		// Show tokens if DEBUG is set
+		if debug {
+			fmt.Printf("[debug] Tokens: %s\r\n", lexer)
 		}
 
 		expr, err := NewExpressionFromLexer(lexer)
 		if err != nil {
 			return nil, fmt.Errorf("error creating expression: %w", err)
+		}
+
+		// Show expression if DEBUG is set
+		if debug {
+			fmt.Printf("[debug] Expression: %s\r\n", expr)
 		}
 
 		// Handle variable assignment
@@ -46,6 +64,12 @@ func (p *Parser) Parse(input string) ([]float64, error) {
 					return nil, fmt.Errorf("error evaluating assignment: %w", err)
 				}
 				p.variables[varName] = val
+
+				// Print dividing line for readability if DEBUG is set
+				if debug {
+					fmt.Printf("------------------------\r\n")
+				}
+
 				continue
 			}
 		}
@@ -60,6 +84,16 @@ func (p *Parser) Parse(input string) ([]float64, error) {
 		rounded := math.Round(result)
 		if math.Abs(rounded-result) < IntApproxTolerance {
 			result = rounded
+		}
+
+		// Show result if DEBUG is set
+		if debug {
+			fmt.Printf("[debug] Evaluated: %s\r\n", strconv.FormatFloat(result, 'f', -1, 64))
+		}
+
+		// Print dividing line for readability if DEBUG is set
+		if debug {
+			fmt.Printf("------------------------\r\n")
 		}
 
 		results = append(results, result)

@@ -121,6 +121,26 @@ func (l *Lexer) HasNext() bool {
 	return l.cursor < len(l.tokens)
 }
 
+func (l *Lexer) String() string {
+	if len(l.tokens) == 0 {
+		return "[]"
+	}
+
+	var sb strings.Builder
+	sb.WriteRune('[')
+	for i, token := range l.tokens {
+		sb.WriteRune('"')
+		sb.WriteString(token.String())
+		sb.WriteRune('"')
+		if i < len(l.tokens)-1 {
+			sb.WriteString(", ")
+		}
+	}
+	sb.WriteRune(']')
+
+	return sb.String()
+}
+
 func (l *Lexer) readNumber(input string) error {
 	var sb strings.Builder
 

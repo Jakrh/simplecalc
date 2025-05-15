@@ -57,25 +57,27 @@ The calculator processes an input in three stages:
 
 ---
 
-## Download the `golang.org/x/term` package
+## Run the calculator
+
+### Download the `golang.org/x/term` package
 
 ```bash
 go mod tidy
 ```
 
-## Test
+### Test
 
 ```bash
 go test -v ./...
 ```
 
-## Run
+### Run
 
 ```bash
 go run .
 ```
 
-## Run with debug mode to observe each stage of processing
+### Run with debug mode to observe each stage of processing
 
 ```bash
 DEBUG=1 go run .

@@ -1,7 +1,7 @@
 package parser_test
 
 import (
-	"reflect"
+	"slices"
 	"testing"
 
 	"simplecalc/pkg/parser"
@@ -15,11 +15,9 @@ func TestLexer(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name:  "empty input",
-			input: "",
-			want: []parser.Token{
-				parser.NewEOFToken(),
-			},
+			name:    "empty input",
+			input:   "",
+			want:    []parser.Token{},
 			wantErr: false,
 		},
 		{
@@ -29,7 +27,6 @@ func TestLexer(t *testing.T) {
 				parser.NewAtomNumToken("1"),
 				parser.NewOPTokenByLiteral("+"),
 				parser.NewAtomNumToken("2"),
-				parser.NewEOFToken(),
 			},
 			wantErr: false,
 		},
@@ -40,7 +37,6 @@ func TestLexer(t *testing.T) {
 				parser.NewAtomNumToken("12"),
 				parser.NewOPTokenByLiteral("-"),
 				parser.NewAtomNumToken("3.4"),
-				parser.NewEOFToken(),
 			},
 			wantErr: false,
 		},
@@ -63,7 +59,6 @@ func TestLexer(t *testing.T) {
 				parser.NewAtomNumToken("4"),
 				parser.NewOPTokenByLiteral("/"),
 				parser.NewAtomNumToken("5"),
-				parser.NewEOFToken(),
 			},
 			wantErr: false,
 		},
@@ -78,7 +73,6 @@ func TestLexer(t *testing.T) {
 				parser.NewOPTokenByLiteral(")"),
 				parser.NewOPTokenByLiteral("*"),
 				parser.NewAtomNumToken("3"),
-				parser.NewEOFToken(),
 			},
 			wantErr: false,
 		},
@@ -87,7 +81,6 @@ func TestLexer(t *testing.T) {
 			input: "123",
 			want: []parser.Token{
 				parser.NewAtomNumToken("123"),
-				parser.NewEOFToken(),
 			},
 			wantErr: false,
 		},
@@ -96,7 +89,6 @@ func TestLexer(t *testing.T) {
 			input: "3.14",
 			want: []parser.Token{
 				parser.NewAtomNumToken("3.14"),
-				parser.NewEOFToken(),
 			},
 			wantErr: false,
 		},
@@ -105,7 +97,6 @@ func TestLexer(t *testing.T) {
 			input: ".5",
 			want: []parser.Token{
 				parser.NewAtomNumToken(".5"),
-				parser.NewEOFToken(),
 			},
 			wantErr: false,
 		},
@@ -114,7 +105,6 @@ func TestLexer(t *testing.T) {
 			input: "10.",
 			want: []parser.Token{
 				parser.NewAtomNumToken("10."),
-				parser.NewEOFToken(),
 			},
 			wantErr: false,
 		},
@@ -132,7 +122,6 @@ func TestLexer(t *testing.T) {
 				parser.NewOPTokenByLiteral("+"),
 				parser.NewAtomNumToken("2"),
 				parser.NewOPTokenByLiteral(")"),
-				parser.NewEOFToken(),
 			},
 			wantErr: false,
 		},
@@ -142,7 +131,6 @@ func TestLexer(t *testing.T) {
 			want: []parser.Token{
 				parser.NewOPTokenByLiteral("-"),
 				parser.NewAtomNumToken("5"),
-				parser.NewEOFToken(),
 			},
 			wantErr: false,
 		},
@@ -152,7 +140,6 @@ func TestLexer(t *testing.T) {
 			want: []parser.Token{
 				parser.NewOPTokenByLiteral("-"),
 				parser.NewAtomNumToken("3.14"),
-				parser.NewEOFToken(),
 			},
 			wantErr: false,
 		},
@@ -162,7 +149,6 @@ func TestLexer(t *testing.T) {
 			want: []parser.Token{
 				parser.NewOPTokenByLiteral("-"),
 				parser.NewAtomNumToken("10."),
-				parser.NewEOFToken(),
 			},
 			wantErr: false,
 		},
@@ -178,7 +164,6 @@ func TestLexer(t *testing.T) {
 				parser.NewOPTokenByLiteral("*"),
 				parser.NewOPTokenByLiteral("-"),
 				parser.NewAtomNumToken("3"),
-				parser.NewEOFToken(),
 			},
 			wantErr: false,
 		},
@@ -194,7 +179,6 @@ func TestLexer(t *testing.T) {
 				parser.NewOPTokenByLiteral(")"),
 				parser.NewOPTokenByLiteral("*"),
 				parser.NewAtomNumToken("2"),
-				parser.NewEOFToken(),
 			},
 			wantErr: false,
 		},
@@ -206,7 +190,6 @@ func TestLexer(t *testing.T) {
 				parser.NewAtomNumToken("2"),
 				parser.NewOPTokenByLiteral("-"),
 				parser.NewAtomNumToken("3"),
-				parser.NewEOFToken(),
 			},
 			wantErr: false,
 		},
@@ -216,7 +199,6 @@ func TestLexer(t *testing.T) {
 			want: []parser.Token{
 				parser.NewOPTokenByLiteral("-"),
 				parser.NewAtomNumToken(".5"),
-				parser.NewEOFToken(),
 			},
 			wantErr: false,
 		},
@@ -228,7 +210,6 @@ func TestLexer(t *testing.T) {
 				parser.NewAtomNumToken(".5"),
 				parser.NewOPTokenByLiteral("+"),
 				parser.NewAtomNumToken("2"),
-				parser.NewEOFToken(),
 			},
 			wantErr: false,
 		},
@@ -245,7 +226,6 @@ func TestLexer(t *testing.T) {
 				parser.NewOPTokenByLiteral("-"),
 				parser.NewAtomNumToken(".3"),
 				parser.NewOPTokenByLiteral(")"),
-				parser.NewEOFToken(),
 			},
 			wantErr: false,
 		},
@@ -262,7 +242,6 @@ func TestLexer(t *testing.T) {
 				parser.NewOPTokenByLiteral("+"),
 				parser.NewAtomNumToken(".3"),
 				parser.NewOPTokenByLiteral(")"),
-				parser.NewEOFToken(),
 			},
 			wantErr: false,
 		},
@@ -271,7 +250,6 @@ func TestLexer(t *testing.T) {
 			input: ")",
 			want: []parser.Token{
 				parser.NewOPTokenByLiteral(")"),
-				parser.NewEOFToken(),
 			},
 			wantErr: false,
 		},
@@ -287,7 +265,6 @@ func TestLexer(t *testing.T) {
 				parser.NewAtomNumToken("3"),
 				parser.NewOPTokenByLiteral(")"),
 				parser.NewOPTokenByLiteral(")"),
-				parser.NewEOFToken(),
 			},
 			wantErr: false,
 		},
@@ -307,7 +284,6 @@ func TestLexer(t *testing.T) {
 				parser.NewOPTokenByLiteral(")"),
 				parser.NewOPTokenByLiteral("-"),
 				parser.NewAtomNumToken("4"),
-				parser.NewEOFToken(),
 			},
 			wantErr: false,
 		},
@@ -317,7 +293,6 @@ func TestLexer(t *testing.T) {
 			want: []parser.Token{
 				parser.NewOPTokenByLiteral("("),
 				parser.NewOPTokenByLiteral(")"),
-				parser.NewEOFToken(),
 			},
 			wantErr: false,
 		},
@@ -328,7 +303,6 @@ func TestLexer(t *testing.T) {
 				parser.NewAtomVarToken("var1"),
 				parser.NewOPTokenByLiteral("="),
 				parser.NewAtomNumToken("5"),
-				parser.NewEOFToken(),
 			},
 			wantErr: false,
 		},
@@ -340,7 +314,6 @@ func TestLexer(t *testing.T) {
 				parser.NewOPTokenByLiteral("="),
 				parser.NewOPTokenByLiteral("-"),
 				parser.NewAtomNumToken("5"),
-				parser.NewEOFToken(),
 			},
 			wantErr: false,
 		},
@@ -350,7 +323,6 @@ func TestLexer(t *testing.T) {
 			want: []parser.Token{
 				parser.NewOPTokenByLiteral("-"),
 				parser.NewAtomVarToken("y"),
-				parser.NewEOFToken(),
 			},
 			wantErr: false,
 		},
@@ -362,7 +334,6 @@ func TestLexer(t *testing.T) {
 				parser.NewOPTokenByLiteral("-"),
 				parser.NewAtomVarToken("y"),
 				parser.NewOPTokenByLiteral(")"),
-				parser.NewEOFToken(),
 			},
 			wantErr: false,
 		},
@@ -376,7 +347,6 @@ func TestLexer(t *testing.T) {
 				parser.NewOPTokenByLiteral(")"),
 				parser.NewOPTokenByLiteral("+"),
 				parser.NewAtomNumToken("2"),
-				parser.NewEOFToken(),
 			},
 			wantErr: false,
 		},
@@ -390,7 +360,6 @@ func TestLexer(t *testing.T) {
 				parser.NewAtomVarToken("y"),
 				parser.NewOPTokenByLiteral("+"),
 				parser.NewAtomNumToken("2"),
-				parser.NewEOFToken(),
 			},
 			wantErr: false,
 		},
@@ -401,7 +370,6 @@ func TestLexer(t *testing.T) {
 				parser.NewAtomNumToken("2"),
 				parser.NewOPTokenByLiteral("**"),
 				parser.NewAtomNumToken("3"),
-				parser.NewEOFToken(),
 			},
 			wantErr: false,
 		},
@@ -416,7 +384,6 @@ func TestLexer(t *testing.T) {
 				parser.NewOPTokenByLiteral(")"),
 				parser.NewOPTokenByLiteral("**"),
 				parser.NewAtomNumToken("2"),
-				parser.NewEOFToken(),
 			},
 			wantErr: false,
 		},
@@ -428,7 +395,6 @@ func TestLexer(t *testing.T) {
 				parser.NewAtomNumToken("2"),
 				parser.NewOPTokenByLiteral("**"),
 				parser.NewAtomNumToken("3"),
-				parser.NewEOFToken(),
 			},
 			wantErr: false,
 		},
@@ -443,7 +409,6 @@ func TestLexer(t *testing.T) {
 				parser.NewOPTokenByLiteral(")"),
 				parser.NewOPTokenByLiteral("**"),
 				parser.NewAtomNumToken("2"),
-				parser.NewEOFToken(),
 			},
 			wantErr: false,
 		},
@@ -454,7 +419,6 @@ func TestLexer(t *testing.T) {
 				parser.NewAtomNumToken("2"),
 				parser.NewOPTokenByLiteral("**"),
 				parser.NewAtomNumToken("0.5"),
-				parser.NewEOFToken(),
 			},
 			wantErr: false,
 		},
@@ -478,7 +442,6 @@ func TestLexer(t *testing.T) {
 				parser.NewAtomNumToken(".5"),
 				parser.NewOPTokenByLiteral("**"),
 				parser.NewAtomNumToken("3"),
-				parser.NewEOFToken(),
 			},
 			wantErr: false,
 		},
@@ -497,7 +460,7 @@ func TestLexer(t *testing.T) {
 			for l.HasNext() {
 				got = append(got, l.Next())
 			}
-			if !reflect.DeepEqual(got, tt.want) {
+			if !slices.Equal(got, tt.want) {
 				t.Errorf("Tokens = %v, want %v", got, tt.want)
 			}
 		})

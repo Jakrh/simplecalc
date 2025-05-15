@@ -16,9 +16,7 @@ type Lexer struct {
 func NewLexer(input string) (*Lexer, error) {
 	if len(input) == 0 {
 		return &Lexer{
-			tokens: []Token{
-				NewEOFToken(),
-			},
+			tokens: []Token{},
 			cursor: 0,
 		}, nil
 	}
@@ -86,8 +84,6 @@ func (l *Lexer) parseTokens(input string) error {
 			}
 		}
 	}
-
-	l.tokens = append(l.tokens, NewEOFToken())
 
 	// Reset the cursor
 	// Here we are using l.cursor to track the position in the tokens slice
